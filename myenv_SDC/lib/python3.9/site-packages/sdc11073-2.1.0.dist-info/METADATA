@@ -1,0 +1,144 @@
+Metadata-Version: 2.3
+Name: sdc11073
+Version: 2.1.0
+Summary: Pure python implementation of IEEE11073 SDC protocol
+Project-URL: Homepage, https://github.com/Draegerwerk/sdc11073
+Project-URL: Bug Tracker, https://github.com/Draegerwerk/sdc11073/issues
+Author-email: Bernd Deichmann <bernd.deichmann@draeger.com>, Leon Budnick <leon.budnick@draeger.com>
+License-File: LICENSE
+Keywords: IEEE11073,SDC
+Classifier: Development Status :: 5 - Production/Stable
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: Microsoft :: Windows
+Classifier: Operating System :: POSIX :: Linux
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Topic :: Software Development
+Requires-Python: <3.13,>=3.9
+Requires-Dist: aiohttp
+Requires-Dist: ifaddr
+Requires-Dist: lxml>=2.3
+Requires-Dist: typing-extensions; python_version < '3.10'
+Provides-Extra: dev
+Requires-Dist: lz4; extra == 'dev'
+Requires-Dist: mypy; extra == 'dev'
+Requires-Dist: pytest; extra == 'dev'
+Requires-Dist: pytest-cov; extra == 'dev'
+Requires-Dist: pytest-html; extra == 'dev'
+Requires-Dist: pytest-xdist[psutil]; extra == 'dev'
+Requires-Dist: ruff>=0.2.0; extra == 'dev'
+Requires-Dist: types-lxml; extra == 'dev'
+Provides-Extra: lz4
+Requires-Dist: lz4; extra == 'lz4'
+Provides-Extra: mypy
+Requires-Dist: mypy; extra == 'mypy'
+Requires-Dist: types-lxml; extra == 'mypy'
+Provides-Extra: test
+Requires-Dist: lz4; extra == 'test'
+Requires-Dist: pytest; extra == 'test'
+Requires-Dist: pytest-cov; extra == 'test'
+Requires-Dist: pytest-html; extra == 'test'
+Requires-Dist: pytest-xdist[psutil]; extra == 'test'
+Description-Content-Type: text/x-rst
+
+********
+sdc11073
+********
+
+|img1| |img2| |img3| |img4| |img5|
+
+.. |img1| image:: https://img.shields.io/pypi/pyversions/sdc11073
+   :alt: pypi python version(s)
+
+.. |img2| image:: https://img.shields.io/pypi/v/sdc11073
+   :alt: pypi latest version
+
+.. |img3| image:: https://img.shields.io/pypi/dm/sdc11073
+   :alt: pypi downloads per month
+
+.. |img4| image:: https://img.shields.io/badge/runs%20on-ubuntu%20%7C%20windows-blue
+   :alt: tested on which operating systems
+
+.. |img5| image:: https://codecov.io/gh/Draegerwerk/sdc11073/branch/master/graph/badge.svg?token=EPLCCZMWMM
+   :target: https://codecov.io/gh/Draegerwerk/sdc11073
+   :alt: test coverage
+
+.. image:: https://github.com/Draegerwerk/sdc11073/blob/master/docs/sdc_social_preview.jpg
+   :alt: sdc Picture
+
+Overview
+========
+
+ISO/IEEE 11073 is a standards family for the communication of medical devices. SDC
+(Service-Oriented Device Connectivity) is one of the latest additions to
+this family and is `described here <https://en.wikipedia.org/wiki/IEEE_11073_service-oriented_device_connectivity>`__.
+
+Market-oriented information on SDC from Dräger can be found `here <https://www.draeger.com/Library/Content/sdc-information-sheet-9107546-en.pdf>`__.
+
+SDC is supported by the interoperability association `OR.Net <https://ornet.org/en>`__.
+
+For this open source project the `Contributor License Agreement <https://github.com/Draegerwerk/sdc11073/blob/master/Contributor_License_Agreement.md>`__ governs all relevant activities and your contributions. By contributing to the project you agree to be bound by this Agreement and to licence your work accordingly.
+
+Getting Started
+===============
+
+Installation
+------------
+
+Install `sdc11073 <https://pypi.org/project/sdc11073/>`__ from pypi using::
+
+    pip install sdc11073
+
+Install lz4 compression with::
+
+    pip install sdc11073[lz4]
+
+The latest development version can be installed via::
+
+    git clone https://github.com/Draegerwerk/sdc11073/
+    pip install .
+
+If you want to contribute also checkout our `contribution guideline <https://github.com/Draegerwerk/sdc11073/blob/master/CONTRIBUTING.md>`__.
+
+Tutorials
+---------
+
+Tutorials can be found in the `tutorial <tutorial/>`__ folder
+
+Tests
+=====
+
+Test can be executed with::
+
+    git clone https://github.com/Draegerwerk/sdc11073/
+    pip install ".[test]"
+    pytest
+
+Notices
+=======
+
+The sdc11073 python library is not intended for use in medical products, clinical trials, clinical studies, or in clinical routine.
+
+ISO 9001
+--------
+
+The sdc11073 python library was not developed according to ISO 9001.
+
+Limitations
+===========
+
+The wsdiscovery module only works with a single ipv4 address. Publishing a device on multiple networks it not supported.
+The same is valid for searching.
+
+Support
+=======
+
+Issues can be filed `here <https://github.com/Draegerwerk/sdc11073/issues>`__.
+
+License
+=======
+
+See LICENSE file
