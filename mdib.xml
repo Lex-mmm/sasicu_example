@@ -54,7 +54,19 @@
 					</pm:Operation>
 
 
-				</pm:Sco>				
+				</pm:Sco>
+				<pm:MetaData>
+					<pm:Udi>
+						<pm:DeviceIdentifier/>
+						<pm:HumanReadableForm/>
+						<pm:Issuer/>
+					</pm:Udi>
+					<pm:Manufacturer Lang="en">UMC Utrect</pm:Manufacturer>
+					<pm:ModelName Lang="en">PM simulator</pm:ModelName>
+					<pm:ModelNumber>202502</pm:ModelNumber>
+					<pm:SerialNumber>UMC-0000</pm:SerialNumber>
+				</pm:MetaData>
+				
 				<pm:SystemContext Handle="SC.mds0">
 					<pm:PatientContext Handle="PC.mds0" />
 					<pm:LocationContext Handle="LC.mds0" />
