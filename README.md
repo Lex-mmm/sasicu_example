@@ -52,7 +52,7 @@ Feel free to create issues or pull requests to suggest improvements or report bu
 
 ## License
 
-This work is provided for non-commercial use only. You are not allowed to commercially use, reproduce, or distribute any part of this repository without obtaining explicit permission from the author. For commercial use inquiries, please contact the repository maintainer.
+This work is provided for non-commercial use only. You are not allowed to commercially use, reproduce, or distribute any part of this repository without obtaining explicit permission from the L.M. van Loon (l.m.vanloon@utwente.nl). For commercial use inquiries, please contact the repository maintainer.
 
 ## References
 
