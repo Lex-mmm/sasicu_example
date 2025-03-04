@@ -390,9 +390,12 @@ class DigitalTwinModel:
         FA_CO2 = p_a_CO2 / 713
         FA_O2 = p_a_O2 / 713
 
+        # If p_a_O2 is huge, clamp now:
+        p_a_O2 = max(0.0, min(p_a_O2, 700.0))
+
         c_a_CO2 = self.params['K_CO2'] * p_a_CO2 + self.params['k_CO2']
-        if p_a_O2 > 700:
-            p_a_O2 = 700
+
+        # Now safe from overflow:
         c_a_O2 = self.params['K_O2'] * np.power((1 - np.exp(-self.params['k_O2'] * p_a_O2)), 2)
 
         # For simplicity, let the venous concentrations equal the capillary values

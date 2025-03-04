@@ -2,9 +2,11 @@ from __future__ import annotations
 
 import sys
 import os
+import argparse  # <-- new import
 
-# Define the base path
-BASE_PATH = "/Users/l.m.vanloon/Library/CloudStorage/OneDrive-UMCUtrecht/SDC/sasicu_example"
+# Use the current working directory as the base path instead of a hardcoded one
+BASE_PATH = os.getcwd()
+sys.path.append(BASE_PATH)
 
 # Define the network adapter for discovery
 NETWORK_ADAPTER = "en0"
@@ -36,14 +38,19 @@ from sdc11073 import certloader
 # Added by LM van Loon on 20241106
 from scipy.integrate import solve_ivp
 import numpy as np
-
 # ------------- Original SDC Provider Setup -------------
 # The provider’s UUID is created from a base.
 base_uuid = uuid.UUID('{cc013678-79f6-403c-998f-3cc0cc050230}')
 my_uuid = uuid.uuid5(base_uuid, "12345")
 
 if __name__ == '__main__':
-    # Start discovery on a specific network adapter
+    # Parse command-line arguments for network adapter
+    parser = argparse.ArgumentParser(description="Start SDC Provider")
+    parser.add_argument('--adapter', default='en0', help="Network adapter to use (default: en0)")
+    args = parser.parse_args()
+    NETWORK_ADAPTER = args.adapter
+
+    # Start discovery on the specified network adapter
     my_discovery = WSDiscoverySingleAdapter(NETWORK_ADAPTER)
     my_discovery.start()
 
@@ -94,7 +101,6 @@ if __name__ == '__main__':
     sdc_provider.set_location(my_location)
 
     # ------------- Original MDIB Metric Update -------------
-    # Create local numeric metric values (for example, one numeric metric).
     all_metric_descrs = [c for c in my_mdib.descriptions.objects if c.NODETYPE == pm.NumericMetricDescriptor]
     with my_mdib.metric_state_transaction() as transaction_mgr:
         for metric_descr in all_metric_descrs:
@@ -106,10 +112,9 @@ if __name__ == '__main__':
             st.ActivationState = pm_types.ComponentActivation.ON
 
     # ------------- Digital Twin Model Simulation -------------
-    # Create an instance of the digital twin model.
-    # (Make sure the parameter file "parameters.json" exists and includes all required keys.)
-    dt_model = DigitalTwinModel(patient_id="12345", param_file=os.path.join(BASE_PATH, "MDTparameters/patient_1.json"))
+    from digital_twin_model import DigitalTwinModel
 
+    dt_model = DigitalTwinModel(patient_id="12345", param_file=os.path.join(BASE_PATH, "MDTparameters/patient_1.json"))
     sampling_interval = 5  # seconds (adjust as needed)
     current_time = dt_model.t   # Initially 0
 
@@ -137,10 +142,9 @@ if __name__ == '__main__':
 
         if current_time > 15:
             Sa_O2 -= 20
-        #print(f"SaO2: {Sa_O2}")
+
         current_time_real = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
-        # Wrap MDIB metric update in try/except so SDC errors don’t crash the simulation.
         try:
             with my_mdib.metric_state_transaction() as transaction_mgr:
                 spoO2_state = transaction_mgr.get_state("SpO2.Measuredvalue.2F.44A5")
@@ -148,7 +152,6 @@ if __name__ == '__main__':
         except Exception as e:
             print(f"Warning: Failed to update MDIB metric (SpO2): {e}")
 
-        # Alarm check – wrap in try/except.
         if Sa_O2 < ALARM_THRESHOLD_SaO2:
             try:
                 with my_mdib.alert_state_transaction() as transaction_mgr:
@@ -159,5 +162,4 @@ if __name__ == '__main__':
             except Exception as e:
                 print(f"Warning: Failed to update MDIB alert state: {e}")
 
-        # Sleep until the next update
         time.sleep(sampling_interval)

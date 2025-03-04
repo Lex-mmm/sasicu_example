@@ -1,6 +1,10 @@
 import logging
 import time
 import uuid
+import argparse
+import os
+import netifaces
+import ipaddress
 from sdc11073.xml_types import pm_types, msg_types
 from sdc11073.xml_types import pm_qnames as pm
 from sdc11073.xml_types.actions import periodic_actions
@@ -60,56 +64,53 @@ def set_ensemble_context(mdib: ConsumerMdib, sdc_consumer: SdcConsumer) -> None:
 
 # main entry, will start to scan for the known provider and connect
 # runs forever and consumes metrics everafter
+
 if __name__ == '__main__':
-    # start with discovery (MDPWS) that is running on the named adapter "Ethernet" (replace as you need it on your machine, e.g. "enet0" or "Ethernet)
+    parser = argparse.ArgumentParser(description="Start SDC Consumer with specified network interface")
+    parser.add_argument('--interface', default='en0', help="Network interface to use (default: en0)")
+    parser.add_argument('--ssl-passwd', default="dummypass", help="SSL password for cert loading (default: dummypass)")
+    args = parser.parse_args()
+
+    # Convert interface name to IP address if needed
+    try:
+        # Check if the provided interface is already an IP address
+        ipaddress.IPv4Address(args.interface)
+        network_ip = args.interface
+    except ipaddress.AddressValueError:
+        # Get IP address from network interface name
+        iface_data = netifaces.ifaddresses(args.interface)
+        network_ip = iface_data[netifaces.AF_INET][0]['addr']
+
+    # Determine current file's directory and set the ssl folder path (one folder deeper in 'ssl')
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    ssl_folder = os.path.join(current_dir, 'ssl')
+    
     basic_logging_setup(level=logging.INFO)
-    my_discovery = WSDiscovery("10.132.157.126")
-    # start the discovery
+    my_discovery = WSDiscovery(network_ip)
     my_discovery.start()
+    
     # we want to search until we found one device with this client
     found_device = False
-    # loop until we found our provider
     while not found_device:
-        # we now search explicitly for MedicalDevices on the network
-        # this will send a probe to the network and wait for responses
-        # See MDPWS discovery mechanisms for details
         print('searching for sdc providers')
         services = my_discovery.search_services(types=SdcV1Definitions.MedicalDeviceTypesFilter)
-        # now iterate through the discovered services to check if we foundDevice
-        # the specific provider we search for
         for one_service in services:
             print("Got service: {}".format(one_service.epr))
-            # the EndPointReference is created based on the UUID of the Provider
             if one_service.epr == device_A_UUID.urn:
                 print("Got a match: {}".format(one_service))
-
-                # Create SSL context container from your cert files
+                # Create SSL context container using the dynamic ssl folder
                 my_ssl_context_container = certloader.mk_ssl_contexts_from_folder(
-                    ca_folder='/Users/l.m.vanloon/Library/CloudStorage/OneDrive-UMCUtrecht/SDC/sasicu_example/ssl/',
-                    ssl_passwd='dummypass'
+                    ca_folder=ssl_folder,
+                    ssl_passwd=args.ssl_passwd
                 )
-                # now create a new SDCClient (=Consumer) that can be used
-                # for all interactions with the communication partner
                 my_client = SdcConsumer.from_wsd_service(one_service, ssl_context_container=my_ssl_context_container)
-                # start all services on the client to make sure we get updates
                 my_client.start_all(not_subscribed_actions=periodic_actions)
-                # all data interactions happen through the MDIB (MedicalDeviceInformationBase)
-                # that contains data as described in the BICEPS standard
-                # this variable will contain the data from the provider
                 my_mdib = ConsumerMdib(my_client)
                 my_mdib.init_mdib()
-                # we can subscribe to updates in the MDIB through the
-                # Observable Properties in order to get a callback on
-                # specific changes in the MDIB
                 observableproperties.bind(my_mdib, metrics_by_handle=on_metric_update)
                 observableproperties.bind(my_mdib, alert_by_handle=on_alarm_update)
-                # in order to end the 'scan' loop
                 found_device = True
-
-                # now we demonstrate how to call a remote operation on the consumer
                 set_ensemble_context(my_mdib, my_client)
-
-
-    # endless loop to keep the client running and get notified on metric changes through callback
+    
     while True:
         time.sleep(1)
