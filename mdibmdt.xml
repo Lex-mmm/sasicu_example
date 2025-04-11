@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<msg:GetMdibResponse
+    xmlns:ext="http://standards.ieee.org/downloads/11073/11073-10207-2017/extension"
+    xmlns:fn="http://www.w3.org/2005/xpath-functions"
+    xmlns:fo="http://www.w3.org/1999/XSL/Format"
+    xmlns:m="http://www.draeger.com/CTEM"
+    xmlns:msg="http://standards.ieee.org/downloads/11073/11073-10207-2017/message"
+    xmlns:pm="http://standards.ieee.org/downloads/11073/11073-10207-2017/participant"
+    xmlns:pme="urn:oid:1.3.6.1.4.1.3592.2.6933.1.1"
+    xmlns:ps="http://schemas.microsoft.com/powershell/2004/04"
+    xmlns:xs="http://www.w3.org/2001/XMLSchema"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://standards.ieee.org/downloads/11073/11073-10207-2017/participant BICEPS_ParticipantModel.xsd
+                      http://standards.ieee.org/downloads/11073/11073-10207-2017/message BICEPS_MessageModel.xsd
+                      http://standards.ieee.org/downloads/11073/11073-10207-2017/extension ExtensionPoint.xsd"
+    SequenceId="urn:oid:1">
+  <msg:Mdib SequenceId="urn:oid:1">
+    <pm:MdDescription>
+      <!-- New Cardiovascular Device in the MDIB -->
+      <pm:Mds Handle="mds2" SafetyClassification="MedA">
+        <!-- 1. Device Type Definition -->
+        <pm:Type Code="300001">
+          <pm:ConceptDescription Lang="en-US">
+            Cardiovascular Digital Twin Simulator Device
+          </pm:ConceptDescription>
+        </pm:Type>
+        
+        <!-- 2. Service Control Object (SCO) with an operation to set the ensemble context -->
+        <pm:Sco Handle="sco.mds2">
+          <pm:Operation xsi:type="pm:SetContextStateOperationDescriptor" Handle="ensemble.mds2_sco0" OperationTarget="EN.mds2">
+            <pm:Type Code="1234567">
+              <pm:ConceptDescription Lang="en-US">
+                An operation to set the ensemble context of the cardiovascular device
+              </pm:ConceptDescription>
+            </pm:Type>
+          </pm:Operation>
+        </pm:Sco>
+        
+        <!-- 3. Device Metadata -->
+        <pm:MetaData>
+          <pm:Udi>
+            <pm:DeviceIdentifier/>
+            <pm:HumanReadableForm/>
+            <pm:Issuer/>
+          </pm:Udi>
+          <pm:Manufacturer Lang="en">DigitalTwinSim Corp</pm:Manufacturer>
+          <pm:ModelName Lang="en">CardioSim 3000</pm:ModelName>
+          <pm:ModelNumber>CS3000</pm:ModelNumber>
+          <pm:SerialNumber>CV-0001</pm:SerialNumber>
+        </pm:MetaData>
+        
+        <!-- 4. System Context -->
+        <pm:SystemContext Handle="SC.mds2">
+          <pm:PatientContext Handle="PC.mds2" />
+          <pm:LocationContext Handle="LC.mds2" />
+          <pm:EnsembleContext Handle="EN.mds2" />
+        </pm:SystemContext>
+        
+        <!-- 5. Clock Information -->
+        <pm:Clock Handle="CL.mds2">
+          <pm:TimeProtocol Code="532225">
+            <pm:ConceptDescription Lang="en-US">NTPv4</pm:ConceptDescription>
+          </pm:TimeProtocol>
+        </pm:Clock>
+        
+        <!-- 6. Virtual Medical Device for Cardiovascular Aspects -->
+        <pm:Vmd Handle="vmd_cardio" SafetyClassification="MedA">
+          <pm:Type Code="130800">
+            <pm:ConceptDescription Lang="en-US">
+              Cardiovascular Virtual Medical Device
+            </pm:ConceptDescription>
+          </pm:Type>
+          
+          <!-- Alert System with Conditions and Signals -->
+          <pm:AlertSystem SafetyClassification="MedA" Handle="alert.cardio" SelfCheckPeriod="PT5S">
+            <!-- High Heart Rate Alert Condition -->
+            <pm:AlertCondition Handle="ac.hr.high" xsi:type="pm:AlertConditionDescriptor" SafetyClassification="MedA" Kind="Phy" Priority="Hi">
+              <pm:Type Code="200001">
+                <pm:ConceptDescription Lang="en-US">
+                  High Heart Rate Alert Condition
+                </pm:ConceptDescription>
+              </pm:Type>
+              <pm:Source>heartRate</pm:Source>
+            </pm:AlertCondition>
+            <!-- Low Heart Rate Alert Condition -->
+            <pm:AlertCondition Handle="ac.hr.low" xsi:type="pm:AlertConditionDescriptor" SafetyClassification="MedA" Kind="Phy" Priority="Hi">
+              <pm:Type Code="200002">
+                <pm:ConceptDescription Lang="en-US">
+                  Low Heart Rate Alert Condition
+                </pm:ConceptDescription>
+              </pm:Type>
+              <pm:Source>heartRate</pm:Source>
+            </pm:AlertCondition>
+            <!-- High Blood Pressure Alert Condition -->
+            <pm:AlertCondition Handle="ac.bp.high" xsi:type="pm:AlertConditionDescriptor" SafetyClassification="MedA" Kind="Phy" Priority="Hi">
+              <pm:Type Code="200003">
+                <pm:ConceptDescription Lang="en-US">
+                  High Blood Pressure Alert Condition
+                </pm:ConceptDescription>
+              </pm:Type>
+              <pm:Source>bloodPressure</pm:Source>
+            </pm:AlertCondition>
+            
+            <!-- Corresponding Alert Signals -->
+            <pm:AlertSignal Handle="as.hr.high" ConditionSignaled="ac.hr.high" Manifestation="Aud" Latching="true" SafetyClassification="MedA" />
+            <pm:AlertSignal Handle="as.hr.low" ConditionSignaled="ac.hr.low" Manifestation="Aud" Latching="true" SafetyClassification="MedA" />
+            <pm:AlertSignal Handle="as.bp.high" ConditionSignaled="ac.bp.high" Manifestation="Aud" Latching="true" SafetyClassification="MedA" />
+          </pm:AlertSystem>
+          
+          <!-- Service Control Object (SCO) with Operations to Set Alarm Thresholds -->
+          <pm:Sco Handle="sco.cardio">
+            <!-- Operation: Set High Heart Rate Threshold -->
+            <pm:Operation Handle="set.hr.high" xsi:type="pm:SetValueOperationDescriptor" SafetyClassification="MedC" OperationTarget="heartRateHighThreshold" MaxTimeToFinish="PT1S" Retriggerable="true" AccessLevel="Usr">
+              <pm:Type Code="210001">
+                <pm:ConceptDescription Lang="en-US">
+                  Set High Heart Rate Threshold
+                </pm:ConceptDescription>
+              </pm:Type>
+            </pm:Operation>
+            <!-- Operation: Set Low Heart Rate Threshold -->
+            <pm:Operation Handle="set.hr.low" xsi:type="pm:SetValueOperationDescriptor" SafetyClassification="MedC" OperationTarget="heartRateLowThreshold" MaxTimeToFinish="PT1S" Retriggerable="true" AccessLevel="Usr">
+              <pm:Type Code="210002">
+                <pm:ConceptDescription Lang="en-US">
+                  Set Low Heart Rate Threshold
+                </pm:ConceptDescription>
+              </pm:Type>
+            </pm:Operation>
+            <!-- Operation: Set High Blood Pressure Threshold -->
+            <pm:Operation Handle="set.bp.high" xsi:type="pm:SetValueOperationDescriptor" SafetyClassification="MedC" OperationTarget="bloodPressureHighThreshold" MaxTimeToFinish="PT1S" Retriggerable="true" AccessLevel="Usr">
+              <pm:Type Code="210003">
+                <pm:ConceptDescription Lang="en-US">
+                  Set High Blood Pressure Threshold
+                </pm:ConceptDescription>
+              </pm:Type>
+            </pm:Operation>
+          </pm:Sco>
+          
+          <!-- Channels with Metrics for Cardiovascular Parameters -->
+          <!-- Heart Rate Channel -->
+          <pm:Channel Handle="ch.hr" SafetyClassification="MedA">
+            <pm:Type Code="130801">
+              <pm:ConceptDescription Lang="en-US">
+                Heart Rate Channel
+              </pm:ConceptDescription>
+            </pm:Type>
+            <pm:Metric Handle="heartRate" SafetyClassification="MedA" xsi:type="pm:NumericMetricDescriptor" MetricCategory="Msrmt" MetricAvailability="Cont" Resolution="1">
+              <pm:Type Code="210010">
+                <pm:ConceptDescription Lang="en-US">
+                  Heart Rate (BPM)
+                </pm:ConceptDescription>
+              </pm:Type>
+              <pm:Unit Code="unit.bpm">
+                <pm:ConceptDescription Lang="en-US">
+                  BPM
+                </pm:ConceptDescription>
+              </pm:Unit>
+              <pm:TechnicalRange Upper="200" Lower="30" StepWidth="1" />
+            </pm:Metric>
+          </pm:Channel>
+          
+          <!-- Blood Pressure Channel -->
+          <pm:Channel Handle="ch.bp" SafetyClassification="MedA">
+            <pm:Type Code="130802">
+              <pm:ConceptDescription Lang="en-US">
+                Blood Pressure Channel
+              </pm:ConceptDescription>
+            </pm:Type>
+            <pm:Metric Handle="bloodPressure" SafetyClassification="MedA" xsi:type="pm:NumericMetricDescriptor" MetricCategory="Msrmt" MetricAvailability="Cont" Resolution="1">
+              <pm:Type Code="210020">
+                <pm:ConceptDescription Lang="en-US">
+                  Systolic Blood Pressure (mmHg)
+                </pm:ConceptDescription>
+              </pm:Type>
+              <pm:Unit Code="unit.mmHg">
+                <pm:ConceptDescription Lang="en-US">
+                  mmHg
+                </pm:ConceptDescription>
+              </pm:Unit>
+              <pm:TechnicalRange Upper="200" Lower="80" StepWidth="1" />
+            </pm:Metric>
+          </pm:Channel>
+        </pm:Vmd>
+        
+      </pm:Mds>
+    </pm:MdDescription>
+  </msg:Mdib>
+</msg:GetMdibResponse>
