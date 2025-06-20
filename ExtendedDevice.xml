@@ -1,0 +1,804 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<msg:GetMdibResponse xmlns:ext="http://standards.ieee.org/downloads/11073/11073-10207-2017/extension" xmlns:pm="http://standards.ieee.org/downloads/11073/11073-10207-2017/participant" xmlns:msg="http://standards.ieee.org/downloads/11073/11073-10207-2017/message" xmlns:sdpi="urn:oid:1.3.6.1.4.1.19376.1.6.2.10.1.1.1" xmlns:mpkp="urn:oid:1.3.111.2.11073.10701.3.1.1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" SequenceId="urn:uuid:44bdceab-693d-4a5d-b079-062d31ad4295">
+    <msg:Mdib SequenceId="urn:uuid:44bdceab-693d-4a5d-b079-062d31ad4295">
+        <pm:MdDescription>
+            <pm:Mds Handle="mds" DescriptorVersion="1">
+                <pm:Type Code="300100">
+                    <pm:ConceptDescription Lang="en-US">Extended Medical Device</pm:ConceptDescription>
+                </pm:Type>
+                <pm:Sco Handle="9683052">
+                    <pm:Operation xsi:type="pm:SetContextStateOperationDescriptor" OperationTarget="ensembleContext" Retriggerable="false" Handle="set.ensembleContext" SafetyClassification="MedC">
+                        <pm:Type Code="set.context.ensemble"/>
+                    </pm:Operation>
+                    <pm:Operation xsi:type="pm:ActivateOperationDescriptor" OperationTarget="mds" Retriggerable="false" Handle="setAllAlarmsAudioPause" SafetyClassification="MedC">
+                        <pm:Type Code="128284"/>
+                    </pm:Operation>
+                </pm:Sco>
+                <pm:SystemContext Handle="systemContext">
+                    <pm:PatientContext Handle="patientContext"/>
+                    <pm:LocationContext Handle="locationContext"/>
+                    <pm:EnsembleContext Handle="ensembleContext"/>
+                </pm:SystemContext>
+                <pm:Clock Resolution="PT0.001S" Handle="CL.mds0">
+                    <pm:TimeProtocol Code="532224">
+                        <pm:ConceptDescription Lang="en-US">IEEE 11073 Time Protocol</pm:ConceptDescription>
+                    </pm:TimeProtocol>
+                    <pm:TimeProtocol Code="532225">
+                        <pm:ConceptDescription Lang="en-US">NTPv4</pm:ConceptDescription>
+                    </pm:TimeProtocol>
+                    <pm:TimeProtocol Code="532234">
+                        <pm:ConceptDescription Lang="en-US">PTP</pm:ConceptDescription>
+                    </pm:TimeProtocol>
+                </pm:Clock>
+                <pm:Vmd Handle="vmd.moni">
+                    <pm:Type Code="300110">
+                        <pm:ConceptDescription Lang="en-US">Virtual Device for Monitoring</pm:ConceptDescription>
+                    </pm:Type>
+                    <pm:AlertSystem Handle="alert.system.moni">
+                        <pm:AlertCondition xsi:type="pm:LimitAlertConditionDescriptor" AutoLimitSupported="false" Kind="Phy" Priority="Hi" Handle="limit.temperature.upper">
+                            <pm:Type Code="197002">
+<pm:ConceptDescription Lang="en-US">High Body Temperature Limit</pm:ConceptDescription>
+                            </pm:Type>
+                            <pm:Source>temperature</pm:Source>
+                            <pm:MaxLimits Upper="43"/>
+                        </pm:AlertCondition>
+                        <pm:AlertCondition xsi:type="pm:LimitAlertConditionDescriptor" AutoLimitSupported="false" Kind="Phy" Priority="Lo" Handle="limit.temperature.lower">
+                            <pm:Type Code="8574801">
+<pm:ConceptDescription Lang="en-US">Low Body Temperature Limit</pm:ConceptDescription>
+                            </pm:Type>
+                            <pm:Source>temperature</pm:Source>
+                            <pm:MaxLimits Lower="30"/>
+                        </pm:AlertCondition>
+                        <pm:AlertCondition xsi:type="pm:LimitAlertConditionDescriptor" AutoLimitSupported="false" Kind="Phy" Priority="Hi" Handle="limit.hr.upper">
+                            <pm:Type Code="199728">
+<pm:ConceptDescription Lang="en-US">High Heart Rate Limit</pm:ConceptDescription>
+                            </pm:Type>
+                            <pm:Source>hr</pm:Source>
+                            <pm:MaxLimits Upper="180"/>
+                        </pm:AlertCondition>
+                        <pm:AlertCondition xsi:type="pm:LimitAlertConditionDescriptor" AutoLimitSupported="false" Kind="Phy" Priority="Lo" Handle="limit.hr.lower">
+                            <pm:Type Code="199932">
+<pm:ConceptDescription Lang="en-US">Low Heart Rate Limit</pm:ConceptDescription>
+                            </pm:Type>
+                            <pm:Source>hr</pm:Source>
+                            <pm:MaxLimits Lower="40"/>
+                        </pm:AlertCondition>
+                        <pm:AlertCondition xsi:type="pm:LimitAlertConditionDescriptor" AutoLimitSupported="false" Kind="Phy" Priority="Hi" Handle="limit.sap.upper">
+                            <pm:Type Code="70740">
+<pm:ConceptDescription Lang="en-US">High Systolic Arterial Pressure Limit</pm:ConceptDescription>
+                            </pm:Type>
+                            <pm:Source>sap</pm:Source>
+                            <pm:MaxLimits Upper="200"/>
+                        </pm:AlertCondition>
+                        <pm:AlertCondition xsi:type="pm:LimitAlertConditionDescriptor" AutoLimitSupported="false" Kind="Phy" Priority="Lo" Handle="limit.sap.lower">
+                            <pm:Type Code="70740">
+<pm:ConceptDescription Lang="en-US">Low Systolic Arterial Pressure Limit</pm:ConceptDescription>
+                            </pm:Type>
+                            <pm:Source>sap</pm:Source>
+                            <pm:MaxLimits Lower="80"/>
+                        </pm:AlertCondition>
+                        <pm:AlertCondition xsi:type="pm:LimitAlertConditionDescriptor" AutoLimitSupported="false" Kind="Phy" Priority="Hi" Handle="limit.dap.upper">
+                            <pm:Type Code="70740">
+<pm:ConceptDescription Lang="en-US">High Diastolic Arterial Pressure Limit</pm:ConceptDescription>
+                            </pm:Type>
+                            <pm:Source>dap</pm:Source>
+                            <pm:MaxLimits Upper="120"/>
+                        </pm:AlertCondition>
+                        <pm:AlertCondition xsi:type="pm:LimitAlertConditionDescriptor" AutoLimitSupported="false" Kind="Phy" Priority="Lo" Handle="limit.dap.lower">
+                            <pm:Type Code="70740">
+<pm:ConceptDescription Lang="en-US">Low Diastolic Arterial Pressure Limit</pm:ConceptDescription>
+                            </pm:Type>
+                            <pm:Source>dap</pm:Source>
+                            <pm:MaxLimits Lower="40"/>
+                        </pm:AlertCondition>
+                        <pm:AlertCondition xsi:type="pm:LimitAlertConditionDescriptor" AutoLimitSupported="false" Kind="Phy" Priority="Hi" Handle="limit.map.upper">
+                            <pm:Type Code="70740">
+<pm:ConceptDescription Lang="en-US">High Mean Arterial Pressure Limit</pm:ConceptDescription>
+                            </pm:Type>
+                            <pm:Source>map</pm:Source>
+                            <pm:MaxLimits Upper="150"/>
+                        </pm:AlertCondition>
+                        <pm:AlertCondition xsi:type="pm:LimitAlertConditionDescriptor" AutoLimitSupported="false" Kind="Phy" Priority="Lo" Handle="limit.map.lower">
+                            <pm:Type Code="70740">
+<pm:ConceptDescription Lang="en-US">Low Mean Arterial Pressure Limit</pm:ConceptDescription>
+                            </pm:Type>
+                            <pm:Source>map</pm:Source>
+                            <pm:MaxLimits Lower="50"/>
+                        </pm:AlertCondition>
+                        <pm:AlertCondition xsi:type="pm:LimitAlertConditionDescriptor" AutoLimitSupported="false" Kind="Phy" Priority="Hi" Handle="limit.rr.upper">
+                            <pm:Type Code="199922">
+<pm:ConceptDescription Lang="en-US">High Respiratory Rate Limit</pm:ConceptDescription>
+                            </pm:Type>
+                            <pm:Source>rr</pm:Source>
+                            <pm:MaxLimits Upper="60"/>
+                        </pm:AlertCondition>
+                        <pm:AlertCondition xsi:type="pm:LimitAlertConditionDescriptor" AutoLimitSupported="false" Kind="Phy" Priority="Lo" Handle="limit.rr.lower">
+                            <pm:Type Code="199680">
+<pm:ConceptDescription Lang="en-US">Low Respiratory Rate Limit</pm:ConceptDescription>
+                            </pm:Type>
+                            <pm:Source>rr</pm:Source>
+                            <pm:MaxLimits Lower="5"/>
+                        </pm:AlertCondition>
+                        <pm:AlertCondition xsi:type="pm:LimitAlertConditionDescriptor" AutoLimitSupported="false" Kind="Phy" Priority="Hi" Handle="limit.sao2.upper">
+                            <pm:Type Code="203012">
+<pm:ConceptDescription Lang="en-US">High Oxygen Saturation Limit</pm:ConceptDescription>
+                            </pm:Type>
+                            <pm:Source>sao2</pm:Source>
+                            <pm:MaxLimits Upper="100"/>
+                        </pm:AlertCondition>
+                        <pm:AlertCondition xsi:type="pm:LimitAlertConditionDescriptor" AutoLimitSupported="false" Kind="Phy" Priority="Lo" Handle="limit.sao2.lower">
+                            <pm:Type Code="199854">
+<pm:ConceptDescription Lang="en-US">Low Oxygen Saturation Limit</pm:ConceptDescription>
+                            </pm:Type>
+                            <pm:Source>sao2</pm:Source>
+                            <pm:MaxLimits Lower="80"/>
+                        </pm:AlertCondition>
+                        <pm:AlertCondition xsi:type="pm:LimitAlertConditionDescriptor" AutoLimitSupported="false" Kind="Phy" Priority="Hi" Handle="limit.etco2.upper">
+                            <pm:Type Code="197552">
+<pm:ConceptDescription Lang="en-US">High End-tidal CO₂ Limit</pm:ConceptDescription>
+                            </pm:Type>
+                            <pm:Source>etco2</pm:Source>
+                            <pm:MaxLimits Upper="60"/>
+                        </pm:AlertCondition>
+                        <pm:AlertCondition xsi:type="pm:LimitAlertConditionDescriptor" AutoLimitSupported="false" Kind="Phy" Priority="Lo" Handle="limit.etco2.lower">
+                            <pm:Type Code="199927">
+<pm:ConceptDescription Lang="en-US">Low End-tidal CO₂ Limit</pm:ConceptDescription>
+                            </pm:Type>
+                            <pm:Source>etco2</pm:Source>
+                            <pm:MaxLimits Lower="20"/>
+                        </pm:AlertCondition>
+                        <pm:AlertCondition Kind="Tec" Priority="Lo" Handle="tech.moni.0">
+                            <pm:Type Code="201000">
+<pm:ConceptDescription Lang="en-US">Sensor disconnected</pm:ConceptDescription>
+                            </pm:Type>
+                        </pm:AlertCondition>
+                        <pm:AlertCondition Kind="Tec" Priority="Lo" Handle="tech.moni.1">
+                            <pm:Type Code="201001">
+<pm:ConceptDescription Lang="en-US">ECG lead off</pm:ConceptDescription>
+                            </pm:Type>
+                        </pm:AlertCondition>
+                        <pm:AlertCondition Kind="Tec" Priority="Lo" Handle="tech.moni.2">
+                            <pm:Type Code="201002">
+<pm:ConceptDescription Lang="en-US">Artifact detected</pm:ConceptDescription>
+                            </pm:Type>
+                        </pm:AlertCondition>
+                        <pm:AlertCondition Kind="Tec" Priority="Lo" Handle="tech.moni.3">
+                            <pm:Type Code="201003">
+<pm:ConceptDescription Lang="en-US">NIBP cuff error</pm:ConceptDescription>
+                            </pm:Type>
+                        </pm:AlertCondition>
+                        <pm:AlertCondition Kind="Tec" Priority="Lo" Handle="tech.moni.4">
+                            <pm:Type Code="201004">
+<pm:ConceptDescription Lang="en-US">SpO₂ probe error</pm:ConceptDescription>
+                            </pm:Type>
+                        </pm:AlertCondition>
+                        <pm:AlertCondition Kind="Tec" Priority="Lo" Handle="tech.moni.5">
+                            <pm:Type Code="201005">
+<pm:ConceptDescription Lang="en-US">Battery low</pm:ConceptDescription>
+                            </pm:Type>
+                        </pm:AlertCondition>
+                        <pm:AlertSignal ConditionSignaled="limit.temperature.upper" Manifestation="Aud" Latching="false" AcknowledgementSupported="false" Handle="signal.temperature.upper.audible"/>
+                        <pm:AlertSignal ConditionSignaled="limit.temperature.upper" Manifestation="Vis" Latching="false" AcknowledgementSupported="false" Handle="signal.temperature.upper.visible"/>
+                        <pm:AlertSignal ConditionSignaled="limit.temperature.lower" Manifestation="Aud" Latching="false" AcknowledgementSupported="false" Handle="signal.temperature.lower.audible"/>
+                        <pm:AlertSignal ConditionSignaled="limit.temperature.lower" Manifestation="Vis" Latching="false" AcknowledgementSupported="false" Handle="signal.temperature.lower.visible"/>
+                        <pm:AlertSignal ConditionSignaled="limit.hr.upper" Manifestation="Aud" Latching="false" AcknowledgementSupported="false" Handle="signal.hr.upper.audible"/>
+                        <pm:AlertSignal ConditionSignaled="limit.hr.upper" Manifestation="Vis" Latching="false" AcknowledgementSupported="false" Handle="signal.hr.upper.visible"/>
+                        <pm:AlertSignal ConditionSignaled="limit.hr.lower" Manifestation="Aud" Latching="false" AcknowledgementSupported="false" Handle="signal.hr.lower.audible"/>
+                        <pm:AlertSignal ConditionSignaled="limit.hr.lower" Manifestation="Vis" Latching="false" AcknowledgementSupported="false" Handle="signal.hr.lower.visible"/>
+                        <pm:AlertSignal ConditionSignaled="limit.sap.upper" Manifestation="Aud" Latching="false" AcknowledgementSupported="false" Handle="signal.sap.upper.audible"/>
+                        <pm:AlertSignal ConditionSignaled="limit.sap.upper" Manifestation="Vis" Latching="false" AcknowledgementSupported="false" Handle="signal.sap.upper.visible"/>
+                        <pm:AlertSignal ConditionSignaled="limit.sap.lower" Manifestation="Aud" Latching="false" AcknowledgementSupported="false" Handle="signal.sap.lower.audible"/>
+                        <pm:AlertSignal ConditionSignaled="limit.sap.lower" Manifestation="Vis" Latching="false" AcknowledgementSupported="false" Handle="signal.sap.lower.visible"/>
+                        <pm:AlertSignal ConditionSignaled="limit.dap.upper" Manifestation="Aud" Latching="false" AcknowledgementSupported="false" Handle="signal.dap.upper.audible"/>
+                        <pm:AlertSignal ConditionSignaled="limit.dap.upper" Manifestation="Vis" Latching="false" AcknowledgementSupported="false" Handle="signal.dap.upper.visible"/>
+                        <pm:AlertSignal ConditionSignaled="limit.dap.lower" Manifestation="Aud" Latching="false" AcknowledgementSupported="false" Handle="signal.dap.lower.audible"/>
+                        <pm:AlertSignal ConditionSignaled="limit.dap.lower" Manifestation="Vis" Latching="false" AcknowledgementSupported="false" Handle="signal.dap.lower.visible"/>
+                        <pm:AlertSignal ConditionSignaled="limit.map.upper" Manifestation="Aud" Latching="false" AcknowledgementSupported="false" Handle="signal.map.upper.audible"/>
+                        <pm:AlertSignal ConditionSignaled="limit.map.upper" Manifestation="Vis" Latching="false" AcknowledgementSupported="false" Handle="signal.map.upper.visible"/>
+                        <pm:AlertSignal ConditionSignaled="limit.map.lower" Manifestation="Aud" Latching="false" AcknowledgementSupported="false" Handle="signal.map.lower.audible"/>
+                        <pm:AlertSignal ConditionSignaled="limit.map.lower" Manifestation="Vis" Latching="false" AcknowledgementSupported="false" Handle="signal.map.lower.visible"/>
+                        <pm:AlertSignal ConditionSignaled="limit.rr.upper" Manifestation="Aud" Latching="false" AcknowledgementSupported="false" Handle="signal.rr.upper.audible"/>
+                        <pm:AlertSignal ConditionSignaled="limit.rr.upper" Manifestation="Vis" Latching="false" AcknowledgementSupported="false" Handle="signal.rr.upper.visible"/>
+                        <pm:AlertSignal ConditionSignaled="limit.rr.lower" Manifestation="Aud" Latching="false" AcknowledgementSupported="false" Handle="signal.rr.lower.audible"/>
+                        <pm:AlertSignal ConditionSignaled="limit.rr.lower" Manifestation="Vis" Latching="false" AcknowledgementSupported="false" Handle="signal.rr.lower.visible"/>
+                        <pm:AlertSignal ConditionSignaled="limit.sao2.upper" Manifestation="Aud" Latching="false" AcknowledgementSupported="false" Handle="signal.sao2.upper.audible"/>
+                        <pm:AlertSignal ConditionSignaled="limit.sao2.upper" Manifestation="Vis" Latching="false" AcknowledgementSupported="false" Handle="signal.sao2.upper.visible"/>
+                        <pm:AlertSignal ConditionSignaled="limit.sao2.lower" Manifestation="Aud" Latching="false" AcknowledgementSupported="false" Handle="signal.sao2.lower.audible"/>
+                        <pm:AlertSignal ConditionSignaled="limit.sao2.lower" Manifestation="Vis" Latching="false" AcknowledgementSupported="false" Handle="signal.sao2.lower.visible"/>
+                        <pm:AlertSignal ConditionSignaled="limit.etco2.upper" Manifestation="Aud" Latching="false" AcknowledgementSupported="false" Handle="signal.etco2.upper.audible"/>
+                        <pm:AlertSignal ConditionSignaled="limit.etco2.upper" Manifestation="Vis" Latching="false" AcknowledgementSupported="false" Handle="signal.etco2.upper.visible"/>
+                        <pm:AlertSignal ConditionSignaled="limit.etco2.lower" Manifestation="Aud" Latching="false" AcknowledgementSupported="false" Handle="signal.etco2.lower.audible"/>
+                        <pm:AlertSignal ConditionSignaled="limit.etco2.lower" Manifestation="Vis" Latching="false" AcknowledgementSupported="false" Handle="signal.etco2.lower.visible"/>
+                        <pm:AlertSignal ConditionSignaled="tech.moni.0" Manifestation="Aud" Latching="false" AcknowledgementSupported="false" Handle="signal.tech.moni.0.audible"/>
+                        <pm:AlertSignal ConditionSignaled="tech.moni.0" Manifestation="Vis" Latching="false" AcknowledgementSupported="false" Handle="signal.tech.moni.0.visible"/>
+                        <pm:AlertSignal ConditionSignaled="tech.moni.1" Manifestation="Aud" Latching="false" AcknowledgementSupported="false" Handle="signal.tech.moni.1.audible"/>
+                        <pm:AlertSignal ConditionSignaled="tech.moni.1" Manifestation="Vis" Latching="false" AcknowledgementSupported="false" Handle="signal.tech.moni.1.visible"/>
+                        <pm:AlertSignal ConditionSignaled="tech.moni.2" Manifestation="Aud" Latching="false" AcknowledgementSupported="false" Handle="signal.tech.moni.2.audible"/>
+                        <pm:AlertSignal ConditionSignaled="tech.moni.2" Manifestation="Vis" Latching="false" AcknowledgementSupported="false" Handle="signal.tech.moni.2.visible"/>
+                        <pm:AlertSignal ConditionSignaled="tech.moni.3" Manifestation="Aud" Latching="false" AcknowledgementSupported="false" Handle="signal.tech.moni.3.audible"/>
+                        <pm:AlertSignal ConditionSignaled="tech.moni.3" Manifestation="Vis" Latching="false" AcknowledgementSupported="false" Handle="signal.tech.moni.3.visible"/>
+                        <pm:AlertSignal ConditionSignaled="tech.moni.4" Manifestation="Aud" Latching="false" AcknowledgementSupported="false" Handle="signal.tech.moni.4.audible"/>
+                        <pm:AlertSignal ConditionSignaled="tech.moni.4" Manifestation="Vis" Latching="false" AcknowledgementSupported="false" Handle="signal.tech.moni.4.visible"/>
+                        <pm:AlertSignal ConditionSignaled="tech.moni.5" Manifestation="Aud" Latching="false" AcknowledgementSupported="false" Handle="signal.tech.moni.5.audible"/>
+                        <pm:AlertSignal ConditionSignaled="tech.moni.5" Manifestation="Vis" Latching="false" AcknowledgementSupported="false" Handle="signal.tech.moni.5.visible"/>
+                    </pm:AlertSystem>
+                    <pm:Sco Handle="sco.moni">
+                        <pm:Operation xsi:type="pm:SetValueOperationDescriptor" OperationTarget="temperature" Retriggerable="false" Handle="set.temperature" SafetyClassification="MedC">
+                            <pm:Type Code="set.temperature"/>
+                        </pm:Operation>
+                        <pm:Operation xsi:type="pm:SetValueOperationDescriptor" OperationTarget="limit.temperature.upper" Retriggerable="false" Handle="set.limit.temperature.upper" SafetyClassification="MedC">
+                            <pm:Type Code="set.limit.upper.temperature"/>
+                        </pm:Operation>
+                        <pm:Operation xsi:type="pm:SetValueOperationDescriptor" OperationTarget="limit.temperature.lower" Retriggerable="false" Handle="set.limit.temperature.lower" SafetyClassification="MedC">
+                            <pm:Type Code="set.limit.lower.temperature"/>
+                        </pm:Operation>
+                        <pm:Operation xsi:type="pm:SetValueOperationDescriptor" OperationTarget="hr" Retriggerable="false" Handle="set.hr" SafetyClassification="MedC">
+                            <pm:Type Code="set.hr"/>
+                        </pm:Operation>
+                        <pm:Operation xsi:type="pm:SetValueOperationDescriptor" OperationTarget="limit.hr.upper" Retriggerable="false" Handle="set.limit.hr.upper" SafetyClassification="MedC">
+                            <pm:Type Code="set.limit.upper.hr"/>
+                        </pm:Operation>
+                        <pm:Operation xsi:type="pm:SetValueOperationDescriptor" OperationTarget="limit.hr.lower" Retriggerable="false" Handle="set.limit.hr.lower" SafetyClassification="MedC">
+                            <pm:Type Code="set.limit.lower.hr"/>
+                        </pm:Operation>
+                        <pm:Operation xsi:type="pm:SetValueOperationDescriptor" OperationTarget="sap" Retriggerable="false" Handle="set.sap" SafetyClassification="MedC">
+                            <pm:Type Code="set.sap"/>
+                        </pm:Operation>
+                        <pm:Operation xsi:type="pm:SetValueOperationDescriptor" OperationTarget="limit.sap.upper" Retriggerable="false" Handle="set.limit.sap.upper" SafetyClassification="MedC">
+                            <pm:Type Code="set.limit.upper.sap"/>
+                        </pm:Operation>
+                        <pm:Operation xsi:type="pm:SetValueOperationDescriptor" OperationTarget="limit.sap.lower" Retriggerable="false" Handle="set.limit.sap.lower" SafetyClassification="MedC">
+                            <pm:Type Code="set.limit.lower.sap"/>
+                        </pm:Operation>
+                        <pm:Operation xsi:type="pm:SetValueOperationDescriptor" OperationTarget="dap" Retriggerable="false" Handle="set.dap" SafetyClassification="MedC">
+                            <pm:Type Code="set.dap"/>
+                        </pm:Operation>
+                        <pm:Operation xsi:type="pm:SetValueOperationDescriptor" OperationTarget="limit.dap.upper" Retriggerable="false" Handle="set.limit.dap.upper" SafetyClassification="MedC">
+                            <pm:Type Code="set.limit.upper.dap"/>
+                        </pm:Operation>
+                        <pm:Operation xsi:type="pm:SetValueOperationDescriptor" OperationTarget="limit.dap.lower" Retriggerable="false" Handle="set.limit.dap.lower" SafetyClassification="MedC">
+                            <pm:Type Code="set.limit.lower.dap"/>
+                        </pm:Operation>
+                        <pm:Operation xsi:type="pm:SetValueOperationDescriptor" OperationTarget="map" Retriggerable="false" Handle="set.map" SafetyClassification="MedC">
+                            <pm:Type Code="set.map"/>
+                        </pm:Operation>
+                        <pm:Operation xsi:type="pm:SetValueOperationDescriptor" OperationTarget="limit.map.upper" Retriggerable="false" Handle="set.limit.map.upper" SafetyClassification="MedC">
+                            <pm:Type Code="set.limit.upper.map"/>
+                        </pm:Operation>
+                        <pm:Operation xsi:type="pm:SetValueOperationDescriptor" OperationTarget="limit.map.lower" Retriggerable="false" Handle="set.limit.map.lower" SafetyClassification="MedC">
+                            <pm:Type Code="set.limit.lower.map"/>
+                        </pm:Operation>
+                        <pm:Operation xsi:type="pm:SetValueOperationDescriptor" OperationTarget="rr" Retriggerable="false" Handle="set.rr" SafetyClassification="MedC">
+                            <pm:Type Code="set.rr"/>
+                        </pm:Operation>
+                        <pm:Operation xsi:type="pm:SetValueOperationDescriptor" OperationTarget="limit.rr.upper" Retriggerable="false" Handle="set.limit.rr.upper" SafetyClassification="MedC">
+                            <pm:Type Code="set.limit.upper.rr"/>
+                        </pm:Operation>
+                        <pm:Operation xsi:type="pm:SetValueOperationDescriptor" OperationTarget="limit.rr.lower" Retriggerable="false" Handle="set.limit.rr.lower" SafetyClassification="MedC">
+                            <pm:Type Code="set.limit.lower.rr"/>
+                        </pm:Operation>
+                        <pm:Operation xsi:type="pm:SetValueOperationDescriptor" OperationTarget="sao2" Retriggerable="false" Handle="set.sao2" SafetyClassification="MedC">
+                            <pm:Type Code="set.sao2"/>
+                        </pm:Operation>
+                        <pm:Operation xsi:type="pm:SetValueOperationDescriptor" OperationTarget="limit.sao2.upper" Retriggerable="false" Handle="set.limit.sao2.upper" SafetyClassification="MedC">
+                            <pm:Type Code="set.limit.upper.sao2"/>
+                        </pm:Operation>
+                        <pm:Operation xsi:type="pm:SetValueOperationDescriptor" OperationTarget="limit.sao2.lower" Retriggerable="false" Handle="set.limit.sao2.lower" SafetyClassification="MedC">
+                            <pm:Type Code="set.limit.lower.sao2"/>
+                        </pm:Operation>
+                        <pm:Operation xsi:type="pm:SetValueOperationDescriptor" OperationTarget="etco2" Retriggerable="false" Handle="set.etco2" SafetyClassification="MedC">
+                            <pm:Type Code="set.etco2"/>
+                        </pm:Operation>
+                        <pm:Operation xsi:type="pm:SetValueOperationDescriptor" OperationTarget="limit.etco2.upper" Retriggerable="false" Handle="set.limit.etco2.upper" SafetyClassification="MedC">
+                            <pm:Type Code="set.limit.upper.etco2"/>
+                        </pm:Operation>
+                        <pm:Operation xsi:type="pm:SetValueOperationDescriptor" OperationTarget="limit.etco2.lower" Retriggerable="false" Handle="set.limit.etco2.lower" SafetyClassification="MedC">
+                            <pm:Type Code="set.limit.lower.etco2"/>
+                        </pm:Operation>
+                    </pm:Sco>
+                    <pm:Channel Handle="channel.moni">
+                        <pm:Type Code="300111">
+                            <pm:ConceptDescription Lang="en-US">Vital Signs Channel</pm:ConceptDescription>
+                        </pm:Type>
+                        <pm:Metric xsi:type="pm:NumericMetricDescriptor" Resolution="1.0" MetricCategory="Msrmt" MetricAvailability="Cont" Handle="temperature">
+                            <pm:Type Code="150368">
+<pm:ConceptDescription Lang="en-US">Body Temperature</pm:ConceptDescription>
+                            </pm:Type>
+                            <pm:Unit Code="unit.C"/>
+                            <pm:TechnicalRange Lower="30" Upper="43" StepWidth="1"/>
+                        </pm:Metric>
+                        <pm:Metric xsi:type="pm:NumericMetricDescriptor" Resolution="1.0" MetricCategory="Msrmt" MetricAvailability="Cont" Handle="hr">
+                            <pm:Type Code="149514">
+<pm:ConceptDescription Lang="en-US">Heart Rate</pm:ConceptDescription>
+                            </pm:Type>
+                            <pm:Unit Code="unit.bpm"/>
+                            <pm:TechnicalRange Lower="40" Upper="180" StepWidth="1"/>
+                        </pm:Metric>
+                        <pm:Metric xsi:type="pm:NumericMetricDescriptor" Resolution="1.0" MetricCategory="Msrmt" MetricAvailability="Cont" Handle="sap">
+                            <pm:Type Code="150017">
+<pm:ConceptDescription Lang="en-US">Systolic Arterial Pressure</pm:ConceptDescription>
+                            </pm:Type>
+                            <pm:Unit Code="unit.mmHg"/>
+                            <pm:TechnicalRange Lower="80" Upper="200" StepWidth="1"/>
+                        </pm:Metric>
+                        <pm:Metric xsi:type="pm:NumericMetricDescriptor" Resolution="1.0" MetricCategory="Msrmt" MetricAvailability="Cont" Handle="dap">
+                            <pm:Type Code="150018">
+<pm:ConceptDescription Lang="en-US">Diastolic Arterial Pressure</pm:ConceptDescription>
+                            </pm:Type>
+                            <pm:Unit Code="unit.mmHg"/>
+                            <pm:TechnicalRange Lower="40" Upper="120" StepWidth="1"/>
+                        </pm:Metric>
+                        <pm:Metric xsi:type="pm:NumericMetricDescriptor" Resolution="1.0" MetricCategory="Msrmt" MetricAvailability="Cont" Handle="map">
+                            <pm:Type Code="150019">
+<pm:ConceptDescription Lang="en-US">Mean Arterial Pressure</pm:ConceptDescription>
+                            </pm:Type>
+                            <pm:Unit Code="unit.mmHg"/>
+                            <pm:TechnicalRange Lower="50" Upper="150" StepWidth="1"/>
+                        </pm:Metric>
+                        <pm:Metric xsi:type="pm:NumericMetricDescriptor" Resolution="1.0" MetricCategory="Msrmt" MetricAvailability="Cont" Handle="rr">
+                            <pm:Type Code="151562">
+<pm:ConceptDescription Lang="en-US">Respiratory Rate</pm:ConceptDescription>
+                            </pm:Type>
+                            <pm:Unit Code="unit.bpm"/>
+                            <pm:TechnicalRange Lower="5" Upper="60" StepWidth="1"/>
+                        </pm:Metric>
+                        <pm:Metric xsi:type="pm:NumericMetricDescriptor" Resolution="1.0" MetricCategory="Msrmt" MetricAvailability="Cont" Handle="sao2">
+                            <pm:Type Code="150456">
+<pm:ConceptDescription Lang="en-US">Oxygen Saturation</pm:ConceptDescription>
+                            </pm:Type>
+                            <pm:Unit Code="unit.percent"/>
+                            <pm:TechnicalRange Lower="80" Upper="100" StepWidth="1"/>
+                        </pm:Metric>
+                        <pm:Metric xsi:type="pm:NumericMetricDescriptor" Resolution="1.0" MetricCategory="Msrmt" MetricAvailability="Cont" Handle="etco2">
+                            <pm:Type Code="151592">
+<pm:ConceptDescription Lang="en-US">End-tidal CO₂</pm:ConceptDescription>
+                            </pm:Type>
+                            <pm:Unit Code="unit.mmHg"/>
+                            <pm:TechnicalRange Lower="20" Upper="60" StepWidth="1"/>
+                        </pm:Metric>
+                    </pm:Channel>
+                </pm:Vmd>
+                <pm:Vmd Handle="vmd.vent">
+                    <pm:Type Code="300110">
+                        <pm:ConceptDescription Lang="en-US">Virtual Device for Ventilation</pm:ConceptDescription>
+                    </pm:Type>
+                    <pm:AlertSystem Handle="alert.system.vent">
+                        <pm:AlertCondition xsi:type="pm:LimitAlertConditionDescriptor" AutoLimitSupported="false" Kind="Phy" Priority="Hi" Handle="limit.ppeak.upper">
+                            <pm:Type Code="70740">
+<pm:ConceptDescription Lang="en-US">High Peak Airway Pressure Limit</pm:ConceptDescription>
+                            </pm:Type>
+                            <pm:Source>ppeak</pm:Source>
+                            <pm:MaxLimits Upper="40"/>
+                        </pm:AlertCondition>
+                        <pm:AlertCondition xsi:type="pm:LimitAlertConditionDescriptor" AutoLimitSupported="false" Kind="Phy" Priority="Lo" Handle="limit.ppeak.lower">
+                            <pm:Type Code="70740">
+<pm:ConceptDescription Lang="en-US">Low Peak Airway Pressure Limit</pm:ConceptDescription>
+                            </pm:Type>
+                            <pm:Source>ppeak</pm:Source>
+                            <pm:MaxLimits Lower="0"/>
+                        </pm:AlertCondition>
+                        <pm:AlertCondition xsi:type="pm:LimitAlertConditionDescriptor" AutoLimitSupported="false" Kind="Phy" Priority="Hi" Handle="limit.peep.upper">
+                            <pm:Type Code="70740">
+<pm:ConceptDescription Lang="en-US">High PEEP Limit</pm:ConceptDescription>
+                            </pm:Type>
+                            <pm:Source>peep</pm:Source>
+                            <pm:MaxLimits Upper="20"/>
+                        </pm:AlertCondition>
+                        <pm:AlertCondition xsi:type="pm:LimitAlertConditionDescriptor" AutoLimitSupported="false" Kind="Phy" Priority="Lo" Handle="limit.peep.lower">
+                            <pm:Type Code="70740">
+<pm:ConceptDescription Lang="en-US">Low PEEP Limit</pm:ConceptDescription>
+                            </pm:Type>
+                            <pm:Source>peep</pm:Source>
+                            <pm:MaxLimits Lower="0"/>
+                        </pm:AlertCondition>
+                        <pm:AlertCondition xsi:type="pm:LimitAlertConditionDescriptor" AutoLimitSupported="false" Kind="Phy" Priority="Hi" Handle="limit.vt.upper">
+                            <pm:Type Code="199936">
+<pm:ConceptDescription Lang="en-US">High Tidal Volume Limit</pm:ConceptDescription>
+                            </pm:Type>
+                            <pm:Source>vt</pm:Source>
+                            <pm:MaxLimits Upper="1000"/>
+                        </pm:AlertCondition>
+                        <pm:AlertCondition xsi:type="pm:LimitAlertConditionDescriptor" AutoLimitSupported="false" Kind="Phy" Priority="Lo" Handle="limit.vt.lower">
+                            <pm:Type Code="199938">
+<pm:ConceptDescription Lang="en-US">Low Tidal Volume Limit</pm:ConceptDescription>
+                            </pm:Type>
+                            <pm:Source>vt</pm:Source>
+                            <pm:MaxLimits Lower="100"/>
+                        </pm:AlertCondition>
+                        <pm:AlertCondition xsi:type="pm:LimitAlertConditionDescriptor" AutoLimitSupported="false" Kind="Phy" Priority="Hi" Handle="limit.rr_vent.upper">
+                            <pm:Type Code="199922">
+<pm:ConceptDescription Lang="en-US">High Respiratory Rate Limit</pm:ConceptDescription>
+                            </pm:Type>
+                            <pm:Source>rr_vent</pm:Source>
+                            <pm:MaxLimits Upper="40"/>
+                        </pm:AlertCondition>
+                        <pm:AlertCondition xsi:type="pm:LimitAlertConditionDescriptor" AutoLimitSupported="false" Kind="Phy" Priority="Lo" Handle="limit.rr_vent.lower">
+                            <pm:Type Code="199680">
+<pm:ConceptDescription Lang="en-US">Low Respiratory Rate Limit</pm:ConceptDescription>
+                            </pm:Type>
+                            <pm:Source>rr_vent</pm:Source>
+                            <pm:MaxLimits Lower="5"/>
+                        </pm:AlertCondition>
+                        <pm:AlertCondition xsi:type="pm:LimitAlertConditionDescriptor" AutoLimitSupported="false" Kind="Phy" Priority="Hi" Handle="limit.fio2.upper">
+                            <pm:Type Code="199910">
+<pm:ConceptDescription Lang="en-US">High Fraction of Inspired Oxygen Limit</pm:ConceptDescription>
+                            </pm:Type>
+                            <pm:Source>fio2</pm:Source>
+                            <pm:MaxLimits Upper="1"/>
+                        </pm:AlertCondition>
+                        <pm:AlertCondition xsi:type="pm:LimitAlertConditionDescriptor" AutoLimitSupported="false" Kind="Phy" Priority="Lo" Handle="limit.fio2.lower">
+                            <pm:Type Code="199912">
+<pm:ConceptDescription Lang="en-US">Low Fraction of Inspired Oxygen Limit</pm:ConceptDescription>
+                            </pm:Type>
+                            <pm:Source>fio2</pm:Source>
+                            <pm:MaxLimits Lower="0"/>
+                        </pm:AlertCondition>
+                        <pm:AlertCondition Kind="Tec" Priority="Lo" Handle="tech.vent.0">
+                            <pm:Type Code="202000">
+<pm:ConceptDescription Lang="en-US">CO₂ sensor disconnected</pm:ConceptDescription>
+                            </pm:Type>
+                        </pm:AlertCondition>
+                        <pm:AlertCondition Kind="Tec" Priority="Lo" Handle="tech.vent.1">
+                            <pm:Type Code="202001">
+<pm:ConceptDescription Lang="en-US">Clock/time error</pm:ConceptDescription>
+                            </pm:Type>
+                        </pm:AlertCondition>
+                        <pm:AlertCondition Kind="Tec" Priority="Lo" Handle="tech.vent.2">
+                            <pm:Type Code="202002">
+<pm:ConceptDescription Lang="en-US">Device self-test failed</pm:ConceptDescription>
+                            </pm:Type>
+                        </pm:AlertCondition>
+                        <pm:AlertCondition Kind="Tec" Priority="Lo" Handle="tech.vent.3">
+                            <pm:Type Code="202003">
+<pm:ConceptDescription Lang="en-US">Storage/log full</pm:ConceptDescription>
+                            </pm:Type>
+                        </pm:AlertCondition>
+                        <pm:AlertSignal ConditionSignaled="limit.ppeak.upper" Manifestation="Aud" Latching="false" AcknowledgementSupported="false" Handle="signal.ppeak.upper.audible"/>
+                        <pm:AlertSignal ConditionSignaled="limit.ppeak.upper" Manifestation="Vis" Latching="false" AcknowledgementSupported="false" Handle="signal.ppeak.upper.visible"/>
+                        <pm:AlertSignal ConditionSignaled="limit.ppeak.lower" Manifestation="Aud" Latching="false" AcknowledgementSupported="false" Handle="signal.ppeak.lower.audible"/>
+                        <pm:AlertSignal ConditionSignaled="limit.ppeak.lower" Manifestation="Vis" Latching="false" AcknowledgementSupported="false" Handle="signal.ppeak.lower.visible"/>
+                        <pm:AlertSignal ConditionSignaled="limit.peep.upper" Manifestation="Aud" Latching="false" AcknowledgementSupported="false" Handle="signal.peep.upper.audible"/>
+                        <pm:AlertSignal ConditionSignaled="limit.peep.upper" Manifestation="Vis" Latching="false" AcknowledgementSupported="false" Handle="signal.peep.upper.visible"/>
+                        <pm:AlertSignal ConditionSignaled="limit.peep.lower" Manifestation="Aud" Latching="false" AcknowledgementSupported="false" Handle="signal.peep.lower.audible"/>
+                        <pm:AlertSignal ConditionSignaled="limit.peep.lower" Manifestation="Vis" Latching="false" AcknowledgementSupported="false" Handle="signal.peep.lower.visible"/>
+                        <pm:AlertSignal ConditionSignaled="limit.vt.upper" Manifestation="Aud" Latching="false" AcknowledgementSupported="false" Handle="signal.vt.upper.audible"/>
+                        <pm:AlertSignal ConditionSignaled="limit.vt.upper" Manifestation="Vis" Latching="false" AcknowledgementSupported="false" Handle="signal.vt.upper.visible"/>
+                        <pm:AlertSignal ConditionSignaled="limit.vt.lower" Manifestation="Aud" Latching="false" AcknowledgementSupported="false" Handle="signal.vt.lower.audible"/>
+                        <pm:AlertSignal ConditionSignaled="limit.vt.lower" Manifestation="Vis" Latching="false" AcknowledgementSupported="false" Handle="signal.vt.lower.visible"/>
+                        <pm:AlertSignal ConditionSignaled="limit.rr_vent.upper" Manifestation="Aud" Latching="false" AcknowledgementSupported="false" Handle="signal.rr_vent.upper.audible"/>
+                        <pm:AlertSignal ConditionSignaled="limit.rr_vent.upper" Manifestation="Vis" Latching="false" AcknowledgementSupported="false" Handle="signal.rr_vent.upper.visible"/>
+                        <pm:AlertSignal ConditionSignaled="limit.rr_vent.lower" Manifestation="Aud" Latching="false" AcknowledgementSupported="false" Handle="signal.rr_vent.lower.audible"/>
+                        <pm:AlertSignal ConditionSignaled="limit.rr_vent.lower" Manifestation="Vis" Latching="false" AcknowledgementSupported="false" Handle="signal.rr_vent.lower.visible"/>
+                        <pm:AlertSignal ConditionSignaled="limit.fio2.upper" Manifestation="Aud" Latching="false" AcknowledgementSupported="false" Handle="signal.fio2.upper.audible"/>
+                        <pm:AlertSignal ConditionSignaled="limit.fio2.upper" Manifestation="Vis" Latching="false" AcknowledgementSupported="false" Handle="signal.fio2.upper.visible"/>
+                        <pm:AlertSignal ConditionSignaled="limit.fio2.lower" Manifestation="Aud" Latching="false" AcknowledgementSupported="false" Handle="signal.fio2.lower.audible"/>
+                        <pm:AlertSignal ConditionSignaled="limit.fio2.lower" Manifestation="Vis" Latching="false" AcknowledgementSupported="false" Handle="signal.fio2.lower.visible"/>
+                        <pm:AlertSignal ConditionSignaled="tech.vent.0" Manifestation="Aud" Latching="false" AcknowledgementSupported="false" Handle="signal.tech.vent.0.audible"/>
+                        <pm:AlertSignal ConditionSignaled="tech.vent.0" Manifestation="Vis" Latching="false" AcknowledgementSupported="false" Handle="signal.tech.vent.0.visible"/>
+                        <pm:AlertSignal ConditionSignaled="tech.vent.1" Manifestation="Aud" Latching="false" AcknowledgementSupported="false" Handle="signal.tech.vent.1.audible"/>
+                        <pm:AlertSignal ConditionSignaled="tech.vent.1" Manifestation="Vis" Latching="false" AcknowledgementSupported="false" Handle="signal.tech.vent.1.visible"/>
+                        <pm:AlertSignal ConditionSignaled="tech.vent.2" Manifestation="Aud" Latching="false" AcknowledgementSupported="false" Handle="signal.tech.vent.2.audible"/>
+                        <pm:AlertSignal ConditionSignaled="tech.vent.2" Manifestation="Vis" Latching="false" AcknowledgementSupported="false" Handle="signal.tech.vent.2.visible"/>
+                        <pm:AlertSignal ConditionSignaled="tech.vent.3" Manifestation="Aud" Latching="false" AcknowledgementSupported="false" Handle="signal.tech.vent.3.audible"/>
+                        <pm:AlertSignal ConditionSignaled="tech.vent.3" Manifestation="Vis" Latching="false" AcknowledgementSupported="false" Handle="signal.tech.vent.3.visible"/>
+                    </pm:AlertSystem>
+                    <pm:Sco Handle="sco.vent">
+                        <pm:Operation xsi:type="pm:SetValueOperationDescriptor" OperationTarget="ppeak" Retriggerable="false" Handle="set.ppeak" SafetyClassification="MedC">
+                            <pm:Type Code="set.ppeak"/>
+                        </pm:Operation>
+                        <pm:Operation xsi:type="pm:SetValueOperationDescriptor" OperationTarget="limit.ppeak.upper" Retriggerable="false" Handle="set.limit.ppeak.upper" SafetyClassification="MedC">
+                            <pm:Type Code="set.limit.upper.ppeak"/>
+                        </pm:Operation>
+                        <pm:Operation xsi:type="pm:SetValueOperationDescriptor" OperationTarget="limit.ppeak.lower" Retriggerable="false" Handle="set.limit.ppeak.lower" SafetyClassification="MedC">
+                            <pm:Type Code="set.limit.lower.ppeak"/>
+                        </pm:Operation>
+                        <pm:Operation xsi:type="pm:SetValueOperationDescriptor" OperationTarget="peep" Retriggerable="false" Handle="set.peep" SafetyClassification="MedC">
+                            <pm:Type Code="set.peep"/>
+                        </pm:Operation>
+                        <pm:Operation xsi:type="pm:SetValueOperationDescriptor" OperationTarget="limit.peep.upper" Retriggerable="false" Handle="set.limit.peep.upper" SafetyClassification="MedC">
+                            <pm:Type Code="set.limit.upper.peep"/>
+                        </pm:Operation>
+                        <pm:Operation xsi:type="pm:SetValueOperationDescriptor" OperationTarget="limit.peep.lower" Retriggerable="false" Handle="set.limit.peep.lower" SafetyClassification="MedC">
+                            <pm:Type Code="set.limit.lower.peep"/>
+                        </pm:Operation>
+                        <pm:Operation xsi:type="pm:SetValueOperationDescriptor" OperationTarget="vt" Retriggerable="false" Handle="set.vt" SafetyClassification="MedC">
+                            <pm:Type Code="set.vt"/>
+                        </pm:Operation>
+                        <pm:Operation xsi:type="pm:SetValueOperationDescriptor" OperationTarget="limit.vt.upper" Retriggerable="false" Handle="set.limit.vt.upper" SafetyClassification="MedC">
+                            <pm:Type Code="set.limit.upper.vt"/>
+                        </pm:Operation>
+                        <pm:Operation xsi:type="pm:SetValueOperationDescriptor" OperationTarget="limit.vt.lower" Retriggerable="false" Handle="set.limit.vt.lower" SafetyClassification="MedC">
+                            <pm:Type Code="set.limit.lower.vt"/>
+                        </pm:Operation>
+                        <pm:Operation xsi:type="pm:SetValueOperationDescriptor" OperationTarget="rr_vent" Retriggerable="false" Handle="set.rr_vent" SafetyClassification="MedC">
+                            <pm:Type Code="set.rr_vent"/>
+                        </pm:Operation>
+                        <pm:Operation xsi:type="pm:SetValueOperationDescriptor" OperationTarget="limit.rr_vent.upper" Retriggerable="false" Handle="set.limit.rr_vent.upper" SafetyClassification="MedC">
+                            <pm:Type Code="set.limit.upper.rr_vent"/>
+                        </pm:Operation>
+                        <pm:Operation xsi:type="pm:SetValueOperationDescriptor" OperationTarget="limit.rr_vent.lower" Retriggerable="false" Handle="set.limit.rr_vent.lower" SafetyClassification="MedC">
+                            <pm:Type Code="set.limit.lower.rr_vent"/>
+                        </pm:Operation>
+                        <pm:Operation xsi:type="pm:SetValueOperationDescriptor" OperationTarget="fio2" Retriggerable="false" Handle="set.fio2" SafetyClassification="MedC">
+                            <pm:Type Code="set.fio2"/>
+                        </pm:Operation>
+                        <pm:Operation xsi:type="pm:SetValueOperationDescriptor" OperationTarget="limit.fio2.upper" Retriggerable="false" Handle="set.limit.fio2.upper" SafetyClassification="MedC">
+                            <pm:Type Code="set.limit.upper.fio2"/>
+                        </pm:Operation>
+                        <pm:Operation xsi:type="pm:SetValueOperationDescriptor" OperationTarget="limit.fio2.lower" Retriggerable="false" Handle="set.limit.fio2.lower" SafetyClassification="MedC">
+                            <pm:Type Code="set.limit.lower.fio2"/>
+                        </pm:Operation>
+                    </pm:Sco>
+                    <pm:Channel Handle="channel.vent">
+                        <pm:Type Code="300111">
+                            <pm:ConceptDescription Lang="en-US">Vital Signs Channel</pm:ConceptDescription>
+                        </pm:Type>
+                        <pm:Metric xsi:type="pm:NumericMetricDescriptor" Resolution="1.0" MetricCategory="Msrmt" MetricAvailability="Cont" Handle="ppeak">
+                            <pm:Type Code="151793">
+<pm:ConceptDescription Lang="en-US">Peak Airway Pressure</pm:ConceptDescription>
+                            </pm:Type>
+                            <pm:Unit Code="unit.cmH2O"/>
+                            <pm:TechnicalRange Lower="0" Upper="40" StepWidth="1"/>
+                        </pm:Metric>
+                        <pm:Metric xsi:type="pm:NumericMetricDescriptor" Resolution="1.0" MetricCategory="Msrmt" MetricAvailability="Cont" Handle="peep">
+                            <pm:Type Code="151976">
+<pm:ConceptDescription Lang="en-US">PEEP</pm:ConceptDescription>
+                            </pm:Type>
+                            <pm:Unit Code="unit.cmH2O"/>
+                            <pm:TechnicalRange Lower="0" Upper="20" StepWidth="1"/>
+                        </pm:Metric>
+                        <pm:Metric xsi:type="pm:NumericMetricDescriptor" Resolution="1.0" MetricCategory="Msrmt" MetricAvailability="Cont" Handle="vt">
+                            <pm:Type Code="151980">
+<pm:ConceptDescription Lang="en-US">Tidal Volume</pm:ConceptDescription>
+                            </pm:Type>
+                            <pm:Unit Code="unit.mL"/>
+                            <pm:TechnicalRange Lower="100" Upper="1000" StepWidth="1"/>
+                        </pm:Metric>
+                        <pm:Metric xsi:type="pm:NumericMetricDescriptor" Resolution="1.0" MetricCategory="Msrmt" MetricAvailability="Cont" Handle="rr_vent">
+                            <pm:Type Code="151602">
+<pm:ConceptDescription Lang="en-US">Respiratory Rate</pm:ConceptDescription>
+                            </pm:Type>
+                            <pm:Unit Code="unit.bpm"/>
+                            <pm:TechnicalRange Lower="5" Upper="40" StepWidth="1"/>
+                        </pm:Metric>
+                        <pm:Metric xsi:type="pm:NumericMetricDescriptor" Resolution="1.0" MetricCategory="Msrmt" MetricAvailability="Cont" Handle="fio2">
+                            <pm:Type Code="151720">
+<pm:ConceptDescription Lang="en-US">Fraction of Inspired Oxygen</pm:ConceptDescription>
+                            </pm:Type>
+                            <pm:Unit Code="unit.fraction"/>
+                            <pm:TechnicalRange Lower="0" Upper="1" StepWidth="1"/>
+                        </pm:Metric>
+                    </pm:Channel>
+                </pm:Vmd>
+            </pm:Mds>
+        </pm:MdDescription>
+        <pm:MdState>
+            <pm:State xsi:type="pm:SetContextStateOperationState" OperatingMode="En" DescriptorHandle="set.ensembleContext"/>
+            <pm:State xsi:type="pm:ActivateOperationState" OperatingMode="En" DescriptorHandle="setAllAlarmsAudioPause"/>
+            <pm:State xsi:type="pm:ScoState" ActivationState="On" DescriptorHandle="9683052"/>
+            <pm:State xsi:type="pm:SystemContextState" ActivationState="On" DescriptorHandle="systemContext"/>
+            <pm:State xsi:type="pm:LimitAlertConditionState" MonitoredAlertLimits="None" ActivationState="On" DescriptorHandle="limit.temperature.upper">
+                <pm:Limits/>
+            </pm:State>
+            <pm:State xsi:type="pm:LimitAlertConditionState" MonitoredAlertLimits="None" ActivationState="On" DescriptorHandle="limit.temperature.lower">
+                <pm:Limits/>
+            </pm:State>
+            <pm:State xsi:type="pm:LimitAlertConditionState" MonitoredAlertLimits="None" ActivationState="On" DescriptorHandle="limit.hr.upper">
+                <pm:Limits/>
+            </pm:State>
+            <pm:State xsi:type="pm:LimitAlertConditionState" MonitoredAlertLimits="None" ActivationState="On" DescriptorHandle="limit.hr.lower">
+                <pm:Limits/>
+            </pm:State>
+            <pm:State xsi:type="pm:LimitAlertConditionState" MonitoredAlertLimits="None" ActivationState="On" DescriptorHandle="limit.sap.upper">
+                <pm:Limits/>
+            </pm:State>
+            <pm:State xsi:type="pm:LimitAlertConditionState" MonitoredAlertLimits="None" ActivationState="On" DescriptorHandle="limit.sap.lower">
+                <pm:Limits/>
+            </pm:State>
+            <pm:State xsi:type="pm:LimitAlertConditionState" MonitoredAlertLimits="None" ActivationState="On" DescriptorHandle="limit.dap.upper">
+                <pm:Limits/>
+            </pm:State>
+            <pm:State xsi:type="pm:LimitAlertConditionState" MonitoredAlertLimits="None" ActivationState="On" DescriptorHandle="limit.dap.lower">
+                <pm:Limits/>
+            </pm:State>
+            <pm:State xsi:type="pm:LimitAlertConditionState" MonitoredAlertLimits="None" ActivationState="On" DescriptorHandle="limit.map.upper">
+                <pm:Limits/>
+            </pm:State>
+            <pm:State xsi:type="pm:LimitAlertConditionState" MonitoredAlertLimits="None" ActivationState="On" DescriptorHandle="limit.map.lower">
+                <pm:Limits/>
+            </pm:State>
+            <pm:State xsi:type="pm:LimitAlertConditionState" MonitoredAlertLimits="None" ActivationState="On" DescriptorHandle="limit.rr.upper">
+                <pm:Limits/>
+            </pm:State>
+            <pm:State xsi:type="pm:LimitAlertConditionState" MonitoredAlertLimits="None" ActivationState="On" DescriptorHandle="limit.rr.lower">
+                <pm:Limits/>
+            </pm:State>
+            <pm:State xsi:type="pm:LimitAlertConditionState" MonitoredAlertLimits="None" ActivationState="On" DescriptorHandle="limit.sao2.upper">
+                <pm:Limits/>
+            </pm:State>
+            <pm:State xsi:type="pm:LimitAlertConditionState" MonitoredAlertLimits="None" ActivationState="On" DescriptorHandle="limit.sao2.lower">
+                <pm:Limits/>
+            </pm:State>
+            <pm:State xsi:type="pm:LimitAlertConditionState" MonitoredAlertLimits="None" ActivationState="On" DescriptorHandle="limit.etco2.upper">
+                <pm:Limits/>
+            </pm:State>
+            <pm:State xsi:type="pm:LimitAlertConditionState" MonitoredAlertLimits="None" ActivationState="On" DescriptorHandle="limit.etco2.lower">
+                <pm:Limits/>
+            </pm:State>
+            <pm:State xsi:type="pm:AlertConditionState" ActivationState="On" DescriptorHandle="tech.moni.0"/>
+            <pm:State xsi:type="pm:AlertConditionState" ActivationState="On" DescriptorHandle="tech.moni.1"/>
+            <pm:State xsi:type="pm:AlertConditionState" ActivationState="On" DescriptorHandle="tech.moni.2"/>
+            <pm:State xsi:type="pm:AlertConditionState" ActivationState="On" DescriptorHandle="tech.moni.3"/>
+            <pm:State xsi:type="pm:AlertConditionState" ActivationState="On" DescriptorHandle="tech.moni.4"/>
+            <pm:State xsi:type="pm:AlertConditionState" ActivationState="On" DescriptorHandle="tech.moni.5"/>
+            <pm:State xsi:type="pm:AlertSignalState" ActivationState="On" DescriptorHandle="signal.temperature.upper.audible"/>
+            <pm:State xsi:type="pm:AlertSignalState" ActivationState="On" DescriptorHandle="signal.temperature.upper.visible"/>
+            <pm:State xsi:type="pm:AlertSignalState" ActivationState="On" DescriptorHandle="signal.temperature.lower.audible"/>
+            <pm:State xsi:type="pm:AlertSignalState" ActivationState="On" DescriptorHandle="signal.temperature.lower.visible"/>
+            <pm:State xsi:type="pm:AlertSignalState" ActivationState="On" DescriptorHandle="signal.hr.upper.audible"/>
+            <pm:State xsi:type="pm:AlertSignalState" ActivationState="On" DescriptorHandle="signal.hr.upper.visible"/>
+            <pm:State xsi:type="pm:AlertSignalState" ActivationState="On" DescriptorHandle="signal.hr.lower.audible"/>
+            <pm:State xsi:type="pm:AlertSignalState" ActivationState="On" DescriptorHandle="signal.hr.lower.visible"/>
+            <pm:State xsi:type="pm:AlertSignalState" ActivationState="On" DescriptorHandle="signal.sap.upper.audible"/>
+            <pm:State xsi:type="pm:AlertSignalState" ActivationState="On" DescriptorHandle="signal.sap.upper.visible"/>
+            <pm:State xsi:type="pm:AlertSignalState" ActivationState="On" DescriptorHandle="signal.sap.lower.audible"/>
+            <pm:State xsi:type="pm:AlertSignalState" ActivationState="On" DescriptorHandle="signal.sap.lower.visible"/>
+            <pm:State xsi:type="pm:AlertSignalState" ActivationState="On" DescriptorHandle="signal.dap.upper.audible"/>
+            <pm:State xsi:type="pm:AlertSignalState" ActivationState="On" DescriptorHandle="signal.dap.upper.visible"/>
+            <pm:State xsi:type="pm:AlertSignalState" ActivationState="On" DescriptorHandle="signal.dap.lower.audible"/>
+            <pm:State xsi:type="pm:AlertSignalState" ActivationState="On" DescriptorHandle="signal.dap.lower.visible"/>
+            <pm:State xsi:type="pm:AlertSignalState" ActivationState="On" DescriptorHandle="signal.map.upper.audible"/>
+            <pm:State xsi:type="pm:AlertSignalState" ActivationState="On" DescriptorHandle="signal.map.upper.visible"/>
+            <pm:State xsi:type="pm:AlertSignalState" ActivationState="On" DescriptorHandle="signal.map.lower.audible"/>
+            <pm:State xsi:type="pm:AlertSignalState" ActivationState="On" DescriptorHandle="signal.map.lower.visible"/>
+            <pm:State xsi:type="pm:AlertSignalState" ActivationState="On" DescriptorHandle="signal.rr.upper.audible"/>
+            <pm:State xsi:type="pm:AlertSignalState" ActivationState="On" DescriptorHandle="signal.rr.upper.visible"/>
+            <pm:State xsi:type="pm:AlertSignalState" ActivationState="On" DescriptorHandle="signal.rr.lower.audible"/>
+            <pm:State xsi:type="pm:AlertSignalState" ActivationState="On" DescriptorHandle="signal.rr.lower.visible"/>
+            <pm:State xsi:type="pm:AlertSignalState" ActivationState="On" DescriptorHandle="signal.sao2.upper.audible"/>
+            <pm:State xsi:type="pm:AlertSignalState" ActivationState="On" DescriptorHandle="signal.sao2.upper.visible"/>
+            <pm:State xsi:type="pm:AlertSignalState" ActivationState="On" DescriptorHandle="signal.sao2.lower.audible"/>
+            <pm:State xsi:type="pm:AlertSignalState" ActivationState="On" DescriptorHandle="signal.sao2.lower.visible"/>
+            <pm:State xsi:type="pm:AlertSignalState" ActivationState="On" DescriptorHandle="signal.etco2.upper.audible"/>
+            <pm:State xsi:type="pm:AlertSignalState" ActivationState="On" DescriptorHandle="signal.etco2.upper.visible"/>
+            <pm:State xsi:type="pm:AlertSignalState" ActivationState="On" DescriptorHandle="signal.etco2.lower.audible"/>
+            <pm:State xsi:type="pm:AlertSignalState" ActivationState="On" DescriptorHandle="signal.etco2.lower.visible"/>
+            <pm:State xsi:type="pm:AlertSignalState" ActivationState="On" DescriptorHandle="signal.tech.moni.0.audible"/>
+            <pm:State xsi:type="pm:AlertSignalState" ActivationState="On" DescriptorHandle="signal.tech.moni.0.visible"/>
+            <pm:State xsi:type="pm:AlertSignalState" ActivationState="On" DescriptorHandle="signal.tech.moni.1.audible"/>
+            <pm:State xsi:type="pm:AlertSignalState" ActivationState="On" DescriptorHandle="signal.tech.moni.1.visible"/>
+            <pm:State xsi:type="pm:AlertSignalState" ActivationState="On" DescriptorHandle="signal.tech.moni.2.audible"/>
+            <pm:State xsi:type="pm:AlertSignalState" ActivationState="On" DescriptorHandle="signal.tech.moni.2.visible"/>
+            <pm:State xsi:type="pm:AlertSignalState" ActivationState="On" DescriptorHandle="signal.tech.moni.3.audible"/>
+            <pm:State xsi:type="pm:AlertSignalState" ActivationState="On" DescriptorHandle="signal.tech.moni.3.visible"/>
+            <pm:State xsi:type="pm:AlertSignalState" ActivationState="On" DescriptorHandle="signal.tech.moni.4.audible"/>
+            <pm:State xsi:type="pm:AlertSignalState" ActivationState="On" DescriptorHandle="signal.tech.moni.4.visible"/>
+            <pm:State xsi:type="pm:AlertSignalState" ActivationState="On" DescriptorHandle="signal.tech.moni.5.audible"/>
+            <pm:State xsi:type="pm:AlertSignalState" ActivationState="On" DescriptorHandle="signal.tech.moni.5.visible"/>
+            <pm:State xsi:type="pm:AlertSystemState" ActivationState="On" DescriptorHandle="alert.system.moni"/>
+            <pm:State xsi:type="pm:SetValueOperationState" OperatingMode="En" DescriptorHandle="set.temperature"/>
+            <pm:State xsi:type="pm:SetValueOperationState" OperatingMode="En" DescriptorHandle="set.limit.temperature.upper"/>
+            <pm:State xsi:type="pm:SetValueOperationState" OperatingMode="En" DescriptorHandle="set.limit.temperature.lower"/>
+            <pm:State xsi:type="pm:SetValueOperationState" OperatingMode="En" DescriptorHandle="set.hr"/>
+            <pm:State xsi:type="pm:SetValueOperationState" OperatingMode="En" DescriptorHandle="set.limit.hr.upper"/>
+            <pm:State xsi:type="pm:SetValueOperationState" OperatingMode="En" DescriptorHandle="set.limit.hr.lower"/>
+            <pm:State xsi:type="pm:SetValueOperationState" OperatingMode="En" DescriptorHandle="set.sap"/>
+            <pm:State xsi:type="pm:SetValueOperationState" OperatingMode="En" DescriptorHandle="set.limit.sap.upper"/>
+            <pm:State xsi:type="pm:SetValueOperationState" OperatingMode="En" DescriptorHandle="set.limit.sap.lower"/>
+            <pm:State xsi:type="pm:SetValueOperationState" OperatingMode="En" DescriptorHandle="set.dap"/>
+            <pm:State xsi:type="pm:SetValueOperationState" OperatingMode="En" DescriptorHandle="set.limit.dap.upper"/>
+            <pm:State xsi:type="pm:SetValueOperationState" OperatingMode="En" DescriptorHandle="set.limit.dap.lower"/>
+            <pm:State xsi:type="pm:SetValueOperationState" OperatingMode="En" DescriptorHandle="set.map"/>
+            <pm:State xsi:type="pm:SetValueOperationState" OperatingMode="En" DescriptorHandle="set.limit.map.upper"/>
+            <pm:State xsi:type="pm:SetValueOperationState" OperatingMode="En" DescriptorHandle="set.limit.map.lower"/>
+            <pm:State xsi:type="pm:SetValueOperationState" OperatingMode="En" DescriptorHandle="set.rr"/>
+            <pm:State xsi:type="pm:SetValueOperationState" OperatingMode="En" DescriptorHandle="set.limit.rr.upper"/>
+            <pm:State xsi:type="pm:SetValueOperationState" OperatingMode="En" DescriptorHandle="set.limit.rr.lower"/>
+            <pm:State xsi:type="pm:SetValueOperationState" OperatingMode="En" DescriptorHandle="set.sao2"/>
+            <pm:State xsi:type="pm:SetValueOperationState" OperatingMode="En" DescriptorHandle="set.limit.sao2.upper"/>
+            <pm:State xsi:type="pm:SetValueOperationState" OperatingMode="En" DescriptorHandle="set.limit.sao2.lower"/>
+            <pm:State xsi:type="pm:SetValueOperationState" OperatingMode="En" DescriptorHandle="set.etco2"/>
+            <pm:State xsi:type="pm:SetValueOperationState" OperatingMode="En" DescriptorHandle="set.limit.etco2.upper"/>
+            <pm:State xsi:type="pm:SetValueOperationState" OperatingMode="En" DescriptorHandle="set.limit.etco2.lower"/>
+            <pm:State xsi:type="pm:ScoState" ActivationState="On" DescriptorHandle="sco.moni"/>
+            <pm:State xsi:type="pm:NumericMetricState" ActivationState="On" DescriptorHandle="temperature"/>
+            <pm:State xsi:type="pm:NumericMetricState" ActivationState="On" DescriptorHandle="hr"/>
+            <pm:State xsi:type="pm:NumericMetricState" ActivationState="On" DescriptorHandle="sap"/>
+            <pm:State xsi:type="pm:NumericMetricState" ActivationState="On" DescriptorHandle="dap"/>
+            <pm:State xsi:type="pm:NumericMetricState" ActivationState="On" DescriptorHandle="map"/>
+            <pm:State xsi:type="pm:NumericMetricState" ActivationState="On" DescriptorHandle="rr"/>
+            <pm:State xsi:type="pm:NumericMetricState" ActivationState="On" DescriptorHandle="sao2"/>
+            <pm:State xsi:type="pm:NumericMetricState" ActivationState="On" DescriptorHandle="etco2"/>
+            <pm:State xsi:type="pm:ChannelState" ActivationState="On" DescriptorHandle="channel.moni"/>
+            <pm:State xsi:type="pm:VmdState" ActivationState="On" DescriptorHandle="vmd.moni"/>
+            <pm:State xsi:type="pm:LimitAlertConditionState" MonitoredAlertLimits="None" ActivationState="On" DescriptorHandle="limit.ppeak.upper">
+                <pm:Limits/>
+            </pm:State>
+            <pm:State xsi:type="pm:LimitAlertConditionState" MonitoredAlertLimits="None" ActivationState="On" DescriptorHandle="limit.ppeak.lower">
+                <pm:Limits/>
+            </pm:State>
+            <pm:State xsi:type="pm:LimitAlertConditionState" MonitoredAlertLimits="None" ActivationState="On" DescriptorHandle="limit.peep.upper">
+                <pm:Limits/>
+            </pm:State>
+            <pm:State xsi:type="pm:LimitAlertConditionState" MonitoredAlertLimits="None" ActivationState="On" DescriptorHandle="limit.peep.lower">
+                <pm:Limits/>
+            </pm:State>
+            <pm:State xsi:type="pm:LimitAlertConditionState" MonitoredAlertLimits="None" ActivationState="On" DescriptorHandle="limit.vt.upper">
+                <pm:Limits/>
+            </pm:State>
+            <pm:State xsi:type="pm:LimitAlertConditionState" MonitoredAlertLimits="None" ActivationState="On" DescriptorHandle="limit.vt.lower">
+                <pm:Limits/>
+            </pm:State>
+            <pm:State xsi:type="pm:LimitAlertConditionState" MonitoredAlertLimits="None" ActivationState="On" DescriptorHandle="limit.rr_vent.upper">
+                <pm:Limits/>
+            </pm:State>
+            <pm:State xsi:type="pm:LimitAlertConditionState" MonitoredAlertLimits="None" ActivationState="On" DescriptorHandle="limit.rr_vent.lower">
+                <pm:Limits/>
+            </pm:State>
+            <pm:State xsi:type="pm:LimitAlertConditionState" MonitoredAlertLimits="None" ActivationState="On" DescriptorHandle="limit.fio2.upper">
+                <pm:Limits/>
+            </pm:State>
+            <pm:State xsi:type="pm:LimitAlertConditionState" MonitoredAlertLimits="None" ActivationState="On" DescriptorHandle="limit.fio2.lower">
+                <pm:Limits/>
+            </pm:State>
+            <pm:State xsi:type="pm:AlertConditionState" ActivationState="On" DescriptorHandle="tech.vent.0"/>
+            <pm:State xsi:type="pm:AlertConditionState" ActivationState="On" DescriptorHandle="tech.vent.1"/>
+            <pm:State xsi:type="pm:AlertConditionState" ActivationState="On" DescriptorHandle="tech.vent.2"/>
+            <pm:State xsi:type="pm:AlertConditionState" ActivationState="On" DescriptorHandle="tech.vent.3"/>
+            <pm:State xsi:type="pm:AlertSignalState" ActivationState="On" DescriptorHandle="signal.ppeak.upper.audible"/>
+            <pm:State xsi:type="pm:AlertSignalState" ActivationState="On" DescriptorHandle="signal.ppeak.upper.visible"/>
+            <pm:State xsi:type="pm:AlertSignalState" ActivationState="On" DescriptorHandle="signal.ppeak.lower.audible"/>
+            <pm:State xsi:type="pm:AlertSignalState" ActivationState="On" DescriptorHandle="signal.ppeak.lower.visible"/>
+            <pm:State xsi:type="pm:AlertSignalState" ActivationState="On" DescriptorHandle="signal.peep.upper.audible"/>
+            <pm:State xsi:type="pm:AlertSignalState" ActivationState="On" DescriptorHandle="signal.peep.upper.visible"/>
+            <pm:State xsi:type="pm:AlertSignalState" ActivationState="On" DescriptorHandle="signal.peep.lower.audible"/>
+            <pm:State xsi:type="pm:AlertSignalState" ActivationState="On" DescriptorHandle="signal.peep.lower.visible"/>
+            <pm:State xsi:type="pm:AlertSignalState" ActivationState="On" DescriptorHandle="signal.vt.upper.audible"/>
+            <pm:State xsi:type="pm:AlertSignalState" ActivationState="On" DescriptorHandle="signal.vt.upper.visible"/>
+            <pm:State xsi:type="pm:AlertSignalState" ActivationState="On" DescriptorHandle="signal.vt.lower.audible"/>
+            <pm:State xsi:type="pm:AlertSignalState" ActivationState="On" DescriptorHandle="signal.vt.lower.visible"/>
+            <pm:State xsi:type="pm:AlertSignalState" ActivationState="On" DescriptorHandle="signal.rr_vent.upper.audible"/>
+            <pm:State xsi:type="pm:AlertSignalState" ActivationState="On" DescriptorHandle="signal.rr_vent.upper.visible"/>
+            <pm:State xsi:type="pm:AlertSignalState" ActivationState="On" DescriptorHandle="signal.rr_vent.lower.audible"/>
+            <pm:State xsi:type="pm:AlertSignalState" ActivationState="On" DescriptorHandle="signal.rr_vent.lower.visible"/>
+            <pm:State xsi:type="pm:AlertSignalState" ActivationState="On" DescriptorHandle="signal.fio2.upper.audible"/>
+            <pm:State xsi:type="pm:AlertSignalState" ActivationState="On" DescriptorHandle="signal.fio2.upper.visible"/>
+            <pm:State xsi:type="pm:AlertSignalState" ActivationState="On" DescriptorHandle="signal.fio2.lower.audible"/>
+            <pm:State xsi:type="pm:AlertSignalState" ActivationState="On" DescriptorHandle="signal.fio2.lower.visible"/>
+            <pm:State xsi:type="pm:AlertSignalState" ActivationState="On" DescriptorHandle="signal.tech.vent.0.audible"/>
+            <pm:State xsi:type="pm:AlertSignalState" ActivationState="On" DescriptorHandle="signal.tech.vent.0.visible"/>
+            <pm:State xsi:type="pm:AlertSignalState" ActivationState="On" DescriptorHandle="signal.tech.vent.1.audible"/>
+            <pm:State xsi:type="pm:AlertSignalState" ActivationState="On" DescriptorHandle="signal.tech.vent.1.visible"/>
+            <pm:State xsi:type="pm:AlertSignalState" ActivationState="On" DescriptorHandle="signal.tech.vent.2.audible"/>
+            <pm:State xsi:type="pm:AlertSignalState" ActivationState="On" DescriptorHandle="signal.tech.vent.2.visible"/>
+            <pm:State xsi:type="pm:AlertSignalState" ActivationState="On" DescriptorHandle="signal.tech.vent.3.audible"/>
+            <pm:State xsi:type="pm:AlertSignalState" ActivationState="On" DescriptorHandle="signal.tech.vent.3.visible"/>
+            <pm:State xsi:type="pm:AlertSystemState" ActivationState="On" DescriptorHandle="alert.system.vent"/>
+            <pm:State xsi:type="pm:SetValueOperationState" OperatingMode="En" DescriptorHandle="set.ppeak"/>
+            <pm:State xsi:type="pm:SetValueOperationState" OperatingMode="En" DescriptorHandle="set.limit.ppeak.upper"/>
+            <pm:State xsi:type="pm:SetValueOperationState" OperatingMode="En" DescriptorHandle="set.limit.ppeak.lower"/>
+            <pm:State xsi:type="pm:SetValueOperationState" OperatingMode="En" DescriptorHandle="set.peep"/>
+            <pm:State xsi:type="pm:SetValueOperationState" OperatingMode="En" DescriptorHandle="set.limit.peep.upper"/>
+            <pm:State xsi:type="pm:SetValueOperationState" OperatingMode="En" DescriptorHandle="set.limit.peep.lower"/>
+            <pm:State xsi:type="pm:SetValueOperationState" OperatingMode="En" DescriptorHandle="set.vt"/>
+            <pm:State xsi:type="pm:SetValueOperationState" OperatingMode="En" DescriptorHandle="set.limit.vt.upper"/>
+            <pm:State xsi:type="pm:SetValueOperationState" OperatingMode="En" DescriptorHandle="set.limit.vt.lower"/>
+            <pm:State xsi:type="pm:SetValueOperationState" OperatingMode="En" DescriptorHandle="set.rr_vent"/>
+            <pm:State xsi:type="pm:SetValueOperationState" OperatingMode="En" DescriptorHandle="set.limit.rr_vent.upper"/>
+            <pm:State xsi:type="pm:SetValueOperationState" OperatingMode="En" DescriptorHandle="set.limit.rr_vent.lower"/>
+            <pm:State xsi:type="pm:SetValueOperationState" OperatingMode="En" DescriptorHandle="set.fio2"/>
+            <pm:State xsi:type="pm:SetValueOperationState" OperatingMode="En" DescriptorHandle="set.limit.fio2.upper"/>
+            <pm:State xsi:type="pm:SetValueOperationState" OperatingMode="En" DescriptorHandle="set.limit.fio2.lower"/>
+            <pm:State xsi:type="pm:ScoState" ActivationState="On" DescriptorHandle="sco.vent"/>
+            <pm:State xsi:type="pm:NumericMetricState" ActivationState="On" DescriptorHandle="ppeak"/>
+            <pm:State xsi:type="pm:NumericMetricState" ActivationState="On" DescriptorHandle="peep"/>
+            <pm:State xsi:type="pm:NumericMetricState" ActivationState="On" DescriptorHandle="vt"/>
+            <pm:State xsi:type="pm:NumericMetricState" ActivationState="On" DescriptorHandle="rr_vent"/>
+            <pm:State xsi:type="pm:NumericMetricState" ActivationState="On" DescriptorHandle="fio2"/>
+            <pm:State xsi:type="pm:ChannelState" ActivationState="On" DescriptorHandle="channel.vent"/>
+            <pm:State xsi:type="pm:VmdState" ActivationState="On" DescriptorHandle="vmd.vent"/>
+            <pm:State xsi:type="pm:ClockState" RemoteSync="false" ActivationState="On" DescriptorHandle="CL.mds0"/>
+            <pm:State xsi:type="pm:MdsState" ActivationState="On" DescriptorHandle="mds" DescriptorVersion="1"/>
+        </pm:MdState>
+    </msg:Mdib>
+</msg:GetMdibResponse>

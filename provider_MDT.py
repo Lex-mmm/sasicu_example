@@ -38,6 +38,9 @@ from sdc11073.xml_types import pm_types
 from sdc11073.xml_types.dpws_types import ThisDeviceType
 from sdc11073.xml_types.dpws_types import ThisModelType
 from sdc11073 import certloader
+from sdc11073.xml_types.pm_types import AlertSignalPresence
+
+
 
 # Added by LM van Loon on 20241106
 from scipy.integrate import solve_ivp
@@ -60,7 +63,7 @@ if __name__ == '__main__':
 
     # Create the local MDIB from an XML file.
     try:
-        my_mdib = ProviderMdib.from_mdib_file(os.path.join(BASE_PATH, "mdibmdt.xml"))
+        my_mdib = ProviderMdib.from_mdib_file(os.path.join(BASE_PATH, "ExtendedDevice.xml"))
     except Exception as e:
         print("Error reading mdib.xml:", e)
         sys.exit(1)
@@ -114,11 +117,12 @@ if __name__ == '__main__':
             st.MetricValue.ActiveDeterminationPeriod = 1494554822450
             st.MetricValue.Validity = pm_types.MeasurementValidity.VALID
             st.ActivationState = pm_types.ComponentActivation.ON
+            
 
     # ------------- Digital Twin Model Simulation -------------
     from digital_twin_model import DigitalTwinModel
 
-    dt_model = DigitalTwinModel(patient_id="12345", param_file=os.path.join(BASE_PATH, "MDTparameters/patient_1.json"))
+    dt_model = DigitalTwinModel(patient_id="12345", param_file=os.path.join(BASE_PATH, "healthyFlat.json"))
     sampling_interval = 5  # seconds (adjust as needed)
     current_time = dt_model.t   # Initially 0
 
@@ -129,13 +133,16 @@ if __name__ == '__main__':
     HIGH_BLOOD_PRESSURE_THRESHOLD = 40
 
 
+
     while True:
         sol = solve_ivp(
             fun=dt_model.extended_state_space_equations,
             t_span=[current_time, current_time + sampling_interval],
             y0=dt_model.current_state,
             t_eval=[current_time + sampling_interval],
-            method='RK45'
+            method='LSODA',
+            rtol=1e-6,
+            atol=1e-6
         )
 
         dt_model.current_state = sol.y[:, -1]
@@ -148,10 +155,15 @@ if __name__ == '__main__':
         #   - Blood pressure is stored in state index 6
         new_heart_rate = dt_model.current_state[5]
         new_blood_pressure = dt_model.current_state[6]
-
+        #print(new_heart_rate, new_blood_pressure)
         # Optionally simulate changes based on time
         if current_time > 15:
             new_heart_rate -= 10
+
+        if current_time > 30:
+            new_heart_rate += 10    
+
+        current_time_real = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
         # ----- Add random noise spikes -----
         # 5% chance to add noise to heart rate
@@ -167,69 +179,47 @@ if __name__ == '__main__':
             print(f"[{current_time_real}] Injected BP spike: +{noise:.1f}")
 
 
-        current_time_real = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-
-
-        # --- Update MDIB metric values ---
         try:
             with my_mdib.metric_state_transaction() as transaction_mgr:
-                # Update heart rate metric
-                hr_state = transaction_mgr.get_state("heartRate")
+                # Update heart rate
+                hr_state = transaction_mgr.get_state("hr")
                 hr_state.MetricValue.Value = Decimal(new_heart_rate)
-                
-                # Update blood pressure metric
-                bp_state = transaction_mgr.get_state("bloodPressure")
-                bp_state.MetricValue.Value = Decimal(new_blood_pressure)
+
+                # Update mean arterial pressure
+                map_state = transaction_mgr.get_state("map")
+                map_state.MetricValue.Value = Decimal(new_blood_pressure)
         except Exception as e:
-            print(f"Warning: Failed to update MDIB metrics (heartRate/bloodPressure): {e}")
+            print(f"Warning: Failed to update MDIB metrics: {e}")
 
-
-        # --- Update alert states based on thresholds ---
+        # Activate alerts based on thresholds
         try:
-            with my_mdib.alert_state_transaction() as transaction_mgr:
-                # Heart Rate Alerts
-                if new_heart_rate > HIGH_HEART_RATE_THRESHOLD:
-                    # Trigger high heart rate alarm
-                    ac_hr_high = transaction_mgr.get_state("ac.hr.high")
-                    as_hr_high = transaction_mgr.get_state("as.hr.high")
-                    ac_hr_high.Presence = True
-                    as_hr_high.Presence = pm_types.AlertSignalPresence.ON
-                elif new_heart_rate < LOW_HEART_RATE_THRESHOLD:
-                    # Trigger low heart rate alarm
-                    ac_hr_low = transaction_mgr.get_state("ac.hr.low")
-                    as_hr_low = transaction_mgr.get_state("as.hr.low")
-                    ac_hr_low.Presence = True
-                    as_hr_low.Presence = pm_types.AlertSignalPresence.ON
-                else:
-                    # Clear heart rate alarms if within thresholds
-                    try:
-                        ac_hr_high = transaction_mgr.get_state("ac.hr.high")
-                        as_hr_high = transaction_mgr.get_state("as.hr.high")
-                        ac_hr_low = transaction_mgr.get_state("ac.hr.low")
-                        as_hr_low = transaction_mgr.get_state("as.hr.low")
-                        ac_hr_high.Presence = False
-                        as_hr_high.Presence = pm_types.AlertSignalPresence.OFF
-                        ac_hr_low.Presence = False
-                        as_hr_low.Presence = pm_types.AlertSignalPresence.OFF
-                    except Exception as clear_e:
-                        print(f"Warning: Failed to clear heart rate alarms: {clear_e}")
+            if new_heart_rate > HIGH_HEART_RATE_THRESHOLD:
+                with my_mdib.alert_state_transaction() as transaction_mgr:
+                    cond_state = transaction_mgr.get_state("limit.hr.upper")
+                    vis_signal = transaction_mgr.get_state("signal.hr.upper.visible")
+                    aud_signal = transaction_mgr.get_state("signal.hr.upper.audible")
 
-                # Blood Pressure Alert
-                if new_blood_pressure > HIGH_BLOOD_PRESSURE_THRESHOLD:
-                    ac_bp_high = transaction_mgr.get_state("ac.bp.high")
-                    as_bp_high = transaction_mgr.get_state("as.bp.high")
-                    ac_bp_high.Presence = True
-                    as_bp_high.Presence = pm_types.AlertSignalPresence.ON
-                else:
-                    try:
-                        ac_bp_high = transaction_mgr.get_state("ac.bp.high")
-                        as_bp_high = transaction_mgr.get_state("as.bp.high")
-                        ac_bp_high.Presence = False
-                        as_bp_high.Presence = pm_types.AlertSignalPresence.OFF
-                    except Exception as clear_bp_e:
-                        print(f"Warning: Failed to clear blood pressure alarm: {clear_bp_e}")
+                    cond_state.Presence = True
+                    vis_signal.Presence = pm_types.AlertSignalPresence.ON
+                    aud_signal.Presence = pm_types.AlertSignalPresence.ON
         except Exception as e:
-            print(f"Warning: Failed to update MDIB alert state: {e}")
+            print(f"Warning: Failed to update HR alert: {e}")
+
+        try:
+            if new_blood_pressure > HIGH_BLOOD_PRESSURE_THRESHOLD:
+                with my_mdib.alert_state_transaction() as transaction_mgr:
+                    cond_state = transaction_mgr.get_state("limit.map.upper")
+                    vis_signal = transaction_mgr.get_state("signal.map.upper.visible")
+                    aud_signal = transaction_mgr.get_state("signal.map.upper.audible")
+
+                    cond_state.Presence = True
+                    vis_signal.Presence = pm_types.AlertSignalPresence.ON
+                    aud_signal.Presence = pm_types.AlertSignalPresence.ON
+        except Exception as e:
+            print(f"Warning: Failed to update MAP alert: {e}")
+
+
+
 
 
         time.sleep(sampling_interval)

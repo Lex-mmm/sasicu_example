@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<msg:GetMdibResponse xmlns:ext="http://standards.ieee.org/downloads/11073/11073-10207-2017/extension" xmlns:pm="http://standards.ieee.org/downloads/11073/11073-10207-2017/participant" xmlns:msg="http://standards.ieee.org/downloads/11073/11073-10207-2017/message" xmlns:sdpi="urn:oid:1.3.6.1.4.1.19376.1.6.2.10.1.1.1" xmlns:mpkp="urn:oid:1.3.111.2.11073.10701.3.1.1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" SequenceId="urn:uuid:56038d8d-a83c-4e0b-94d6-31130d437662">
+    <msg:Mdib SequenceId="urn:uuid:56038d8d-a83c-4e0b-94d6-31130d437662">
+        <pm:MdDescription>
+            <pm:Mds Handle="mds">
+                <pm:Type Code="300100">
+                    <pm:ConceptDescription Lang="en-US">Simple Medical Device</pm:ConceptDescription>
+                </pm:Type>
+                <pm:Vmd Handle="vmd">
+                    <pm:Type Code="300110">
+                        <pm:ConceptDescription Lang="en-US">Virtual Device for Monitoring</pm:ConceptDescription>
+                    </pm:Type>
+                    <pm:AlertSystem Handle="alert.system">
+                        <pm:AlertCondition Kind="Phy" Priority="Hi" Handle="alert.temp.high">
+                            <pm:Type Code="300130">
+<pm:ConceptDescription Lang="en-US">High Temperature Alert</pm:ConceptDescription>
+                            </pm:Type>
+                            <pm:Source>temperature</pm:Source>
+                        </pm:AlertCondition>
+                        <pm:AlertSignal ConditionSignaled="alert.temp.high" Manifestation="Aud" Latching="false" AcknowledgementSupported="false" Handle="signal.temp.high"/>
+                    </pm:AlertSystem>
+                    <pm:Sco Handle="sco">
+                        <pm:Operation xsi:type="pm:SetValueOperationDescriptor" OperationTarget="temperature" Retriggerable="false" Handle="set.temp" SafetyClassification="MedC">
+                            <pm:Type Code="300140">
+<pm:ConceptDescription Lang="en-US">Set Body Temperature Value</pm:ConceptDescription>
+                            </pm:Type>
+                        </pm:Operation>
+                    </pm:Sco>
+                    <pm:Channel Handle="channel">
+                        <pm:Type Code="300111">
+                            <pm:ConceptDescription Lang="en-US">Vital Signs Channel</pm:ConceptDescription>
+                        </pm:Type>
+                        <pm:Metric xsi:type="pm:NumericMetricDescriptor" Resolution="0.1" MetricCategory="Msrmt" MetricAvailability="Cont" Handle="temperature">
+                            <pm:Type Code="300120">
+<pm:ConceptDescription Lang="en-US">Body Temperature</pm:ConceptDescription>
+                            </pm:Type>
+                            <pm:Unit Code="unit.C"/>
+                            <pm:TechnicalRange Lower="30.0" Upper="43.0" StepWidth="0.1"/>
+                        </pm:Metric>
+                    </pm:Channel>
+                </pm:Vmd>
+            </pm:Mds>
+        </pm:MdDescription>
+        <pm:MdState>
+            <pm:State xsi:type="pm:AlertConditionState" ActivationState="On" DescriptorHandle="alert.temp.high"/>
+            <pm:State xsi:type="pm:AlertSignalState" ActivationState="On" DescriptorHandle="signal.temp.high"/>
+            <pm:State xsi:type="pm:AlertSystemState" ActivationState="On" DescriptorHandle="alert.system"/>
+            <pm:State xsi:type="pm:SetValueOperationState" OperatingMode="En" DescriptorHandle="set.temp"/>
+            <pm:State xsi:type="pm:ScoState" ActivationState="On" DescriptorHandle="sco"/>
+            <pm:State xsi:type="pm:NumericMetricState" ActivationState="On" DescriptorHandle="temperature"/>
+            <pm:State xsi:type="pm:ChannelState" ActivationState="On" DescriptorHandle="channel"/>
+            <pm:State xsi:type="pm:VmdState" ActivationState="On" DescriptorHandle="vmd"/>
+            <pm:State xsi:type="pm:MdsState" ActivationState="On" DescriptorHandle="mds"/>
+        </pm:MdState>
+    </msg:Mdib>
+</msg:GetMdibResponse>
