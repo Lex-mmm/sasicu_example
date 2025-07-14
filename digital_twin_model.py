@@ -6,7 +6,6 @@ import time, json
 from datetime import datetime, timedelta
 
 
-
 class DigitalTwinModel:
     def __init__(self, patient_id, param_file="healthyFlat", 
                  data_callback=None, 

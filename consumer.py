@@ -47,11 +47,50 @@ device_A_UUID = uuid.uuid5(baseUUID, "12345")
 def on_metric_update(metrics_by_handle: dict):
     # This callback will be called when metrics are updated from the provider
     print(f"Got update on: {list(metrics_by_handle.keys())}")
+    
+    # Print the actual metric values
+    for handle, metric_state in metrics_by_handle.items():
+        if hasattr(metric_state, 'MetricValue') and metric_state.MetricValue is not None:
+            value = metric_state.MetricValue.Value
+            print(f"  {handle}: {value}")
+        else:
+            print(f"  {handle}: No value available")
 
 
 def on_alarm_update(alert_by_handle: dict):
     # This callback will be called when alarms are updated from the provider
-    print(f"Got update on: {list(alert_by_handle.keys())}")
+    print(f"Got alarm update on: {list(alert_by_handle.keys())}")
+    
+    # Print detailed alarm information
+    for handle, alert_state in alert_by_handle.items():
+        print(f"  Alert {handle}:")
+        
+        # Check if it's a limit alert condition
+        if hasattr(alert_state, 'Presence') and alert_state.Presence is not None:
+            print(f"    Presence: {alert_state.Presence}")
+            
+        # Print limit information if available
+        if hasattr(alert_state, 'Limits') and alert_state.Limits is not None:
+            limits = alert_state.Limits
+            if hasattr(limits, 'Upper') and limits.Upper is not None:
+                print(f"    Upper Limit: {limits.Upper}")
+            if hasattr(limits, 'Lower') and limits.Lower is not None:
+                print(f"    Lower Limit: {limits.Lower}")
+                
+        # Print the source metric and its current value if available
+        if hasattr(alert_state, 'Source') and alert_state.Source is not None:
+            source_handle = alert_state.Source
+            print(f"    Source Metric: {source_handle}")
+            
+            # Try to get the current value of the source metric
+            try:
+                if hasattr(my_mdib, 'states') and source_handle in my_mdib.states:
+                    source_state = my_mdib.states[source_handle]
+                    if hasattr(source_state, 'MetricValue') and source_state.MetricValue is not None:
+                        current_value = source_state.MetricValue.Value
+                        print(f"    Current Value: {current_value}")
+            except:
+                print(f"    Current Value: Unable to retrieve")
 
 
 def set_ensemble_context(mdib: ConsumerMdib, sdc_consumer: SdcConsumer) -> None:
