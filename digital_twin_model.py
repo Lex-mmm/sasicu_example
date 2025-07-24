@@ -529,6 +529,8 @@ class DigitalTwinModel:
         cutoff=1
         if len(buffer) < 10:
             return np.mean(buffer)
+        if fs is None or cutoff is None or fs <= 0 or cutoff <= 0:
+            return np.mean(buffer)
         b, a = butter(N=2, Wn=cutoff / (0.5 * fs), btype='low')
         return filtfilt(b, a, buffer)[-1]
 

@@ -131,9 +131,19 @@ if __name__ == '__main__':
     HIGH_HEART_RATE_THRESHOLD = 100
     LOW_HEART_RATE_THRESHOLD = 50
     HIGH_BLOOD_PRESSURE_THRESHOLD = 40
+    HIGH_SYSTOLIC_THRESHOLD = 180
+    LOW_SYSTOLIC_THRESHOLD = 90
+    HIGH_DIASTOLIC_THRESHOLD = 110
+    LOW_DIASTOLIC_THRESHOLD = 60
+    HIGH_TEMPERATURE_THRESHOLD = 38.5
+    LOW_TEMPERATURE_THRESHOLD = 35.0
 
     # Storage for pressure values during integration
     pressure_values = []
+    
+    # Storage for systolic and diastolic pressure tracking
+    pressure_buffer = []
+    max_pressure_window = 50  # Track max/min over recent samples
 
     def pressure_callback(t, y):
         """Callback to collect pressure values during integration"""
@@ -203,12 +213,32 @@ if __name__ == '__main__':
                 avg_pressure_values.append(P_temp[0])
             
             averaged_blood_pressure = np.mean(avg_pressure_values)
+            
+            # Calculate systolic and diastolic pressures
+            pressure_buffer.extend(avg_pressure_values)
+            if len(pressure_buffer) > max_pressure_window:
+                pressure_buffer = pressure_buffer[-max_pressure_window:]
+            
+            # Find systolic (max) and diastolic (min) from recent pressure values
+            systolic_pressure = np.max(pressure_buffer) if pressure_buffer else P[0]
+            diastolic_pressure = np.min(pressure_buffer) if pressure_buffer else P[0]
         else:
             averaged_blood_pressure = P[0]
+            systolic_pressure = P[0]
+            diastolic_pressure = P[0]
+        
+        # Calculate body temperature (simplified model - normally 37°C with small variations)
+        # Add small physiological variations and potential fever response
+        baseline_temp = 37.0  # Normal body temperature in Celsius
+        temp_variation = 0.2 * np.sin(current_time / 3600) + 0.1 * np.random.normal(0, 0.1)  # Daily variation + noise
+        body_temperature = baseline_temp + temp_variation
         
         # Extract values for SDC updates
         new_heart_rate = HR
-        new_blood_pressure = averaged_blood_pressure  # Use averaged pressure
+        new_blood_pressure = averaged_blood_pressure  # Use averaged pressure (MAP)
+        new_systolic_pressure = systolic_pressure
+        new_diastolic_pressure = diastolic_pressure
+        new_temperature = body_temperature
         new_SaO2 = SaO2
         new_RR = RR
         new_etCO2 = dt_model.current_state[17]
@@ -226,36 +256,56 @@ if __name__ == '__main__':
         if random.random() < 0.03:
             noise = random.uniform(10, 25)
             new_blood_pressure += noise
+            new_systolic_pressure += noise  # Also affect systolic
             print(f"[{current_time_real}] Injected BP spike: +{noise:.1f}")
+            
+        # 2% chance to add fever spike to temperature
+        if random.random() < 0.02:
+            fever_spike = random.uniform(1.0, 3.0)
+            new_temperature += fever_spike
+            print(f"[{current_time_real}] Injected temperature spike: +{fever_spike:.1f}")
 
         try:
             with my_mdib.metric_state_transaction() as transaction_mgr:
                 # Update heart rate
                 hr_state = transaction_mgr.get_state("hr")
-                hr_state.MetricValue.Value = Decimal(new_heart_rate)
+                hr_state.MetricValue.Value = Decimal(float(new_heart_rate))
 
                 # Update mean arterial pressure (now averaged)
                 map_state = transaction_mgr.get_state("map")
-                map_state.MetricValue.Value = Decimal(new_blood_pressure)
+                map_state.MetricValue.Value = Decimal(float(new_blood_pressure))
+                
+                # Update systolic arterial pressure (ABPsys)
+                sap_state = transaction_mgr.get_state("sap")
+                sap_state.MetricValue.Value = Decimal(float(new_systolic_pressure))
+                
+                # Update diastolic arterial pressure (ABPdias)
+                dap_state = transaction_mgr.get_state("dap")
+                dap_state.MetricValue.Value = Decimal(float(new_diastolic_pressure))
+                
+                # Update body temperature
+                temp_state = transaction_mgr.get_state("temperature")
+                temp_state.MetricValue.Value = Decimal(float(new_temperature))
                 
                 # Update oxygen saturation
                 sao2_state = transaction_mgr.get_state("sao2")
-                sao2_state.MetricValue.Value = Decimal(new_SaO2)
+                sao2_state.MetricValue.Value = Decimal(float(new_SaO2))
                 
                 # Update respiratory rate
                 rr_state = transaction_mgr.get_state("rr")
-                rr_state.MetricValue.Value = Decimal(new_RR)
+                rr_state.MetricValue.Value = Decimal(float(new_RR))
                 
                 # Update end-tidal CO2
                 etco2_state = transaction_mgr.get_state("etco2")
-                etco2_state.MetricValue.Value = Decimal(new_etCO2)
+                etco2_state.MetricValue.Value = Decimal(float(new_etCO2))
                 
         except Exception as e:
             print(f"Warning: Failed to update MDIB metrics: {e}")
 
         # Print current values for debugging
         print(f"[{current_time_real}] HR: {new_heart_rate:.1f}, MAP (avg): {new_blood_pressure:.1f}, "
-              f"SaO2: {new_SaO2:.1f}, RR: {new_RR:.1f}, etCO2: {new_etCO2:.1f}")
+              f"SYS: {new_systolic_pressure:.1f}, DIA: {new_diastolic_pressure:.1f}, "
+              f"TEMP: {new_temperature:.1f}°C, SaO2: {new_SaO2:.1f}, RR: {new_RR:.1f}, etCO2: {new_etCO2:.1f}")
 
         # Activate alerts based on thresholds
         try:
@@ -283,6 +333,75 @@ if __name__ == '__main__':
                     aud_signal.Presence = pm_types.AlertSignalPresence.ON
         except Exception as e:
             print(f"Warning: Failed to update MAP alert: {e}")
+
+        # New alerts for systolic pressure
+        try:
+            if new_systolic_pressure > HIGH_SYSTOLIC_THRESHOLD:
+                with my_mdib.alert_state_transaction() as transaction_mgr:
+                    cond_state = transaction_mgr.get_state("limit.sap.upper")
+                    vis_signal = transaction_mgr.get_state("signal.sap.upper.visible")
+                    aud_signal = transaction_mgr.get_state("signal.sap.upper.audible")
+
+                    cond_state.Presence = True
+                    vis_signal.Presence = pm_types.AlertSignalPresence.ON
+                    aud_signal.Presence = pm_types.AlertSignalPresence.ON
+            elif new_systolic_pressure < LOW_SYSTOLIC_THRESHOLD:
+                with my_mdib.alert_state_transaction() as transaction_mgr:
+                    cond_state = transaction_mgr.get_state("limit.sap.lower")
+                    vis_signal = transaction_mgr.get_state("signal.sap.lower.visible")
+                    aud_signal = transaction_mgr.get_state("signal.sap.lower.audible")
+
+                    cond_state.Presence = True
+                    vis_signal.Presence = pm_types.AlertSignalPresence.ON
+                    aud_signal.Presence = pm_types.AlertSignalPresence.ON
+        except Exception as e:
+            print(f"Warning: Failed to update SAP alert: {e}")
+
+        # New alerts for diastolic pressure
+        try:
+            if new_diastolic_pressure > HIGH_DIASTOLIC_THRESHOLD:
+                with my_mdib.alert_state_transaction() as transaction_mgr:
+                    cond_state = transaction_mgr.get_state("limit.dap.upper")
+                    vis_signal = transaction_mgr.get_state("signal.dap.upper.visible")
+                    aud_signal = transaction_mgr.get_state("signal.dap.upper.audible")
+
+                    cond_state.Presence = True
+                    vis_signal.Presence = pm_types.AlertSignalPresence.ON
+                    aud_signal.Presence = pm_types.AlertSignalPresence.ON
+            elif new_diastolic_pressure < LOW_DIASTOLIC_THRESHOLD:
+                with my_mdib.alert_state_transaction() as transaction_mgr:
+                    cond_state = transaction_mgr.get_state("limit.dap.lower")
+                    vis_signal = transaction_mgr.get_state("signal.dap.lower.visible")
+                    aud_signal = transaction_mgr.get_state("signal.dap.lower.audible")
+
+                    cond_state.Presence = True
+                    vis_signal.Presence = pm_types.AlertSignalPresence.ON
+                    aud_signal.Presence = pm_types.AlertSignalPresence.ON
+        except Exception as e:
+            print(f"Warning: Failed to update DAP alert: {e}")
+
+        # New alerts for temperature
+        try:
+            if new_temperature > HIGH_TEMPERATURE_THRESHOLD:
+                with my_mdib.alert_state_transaction() as transaction_mgr:
+                    cond_state = transaction_mgr.get_state("limit.temperature.upper")
+                    vis_signal = transaction_mgr.get_state("signal.temperature.upper.visible")
+                    aud_signal = transaction_mgr.get_state("signal.temperature.upper.audible")
+
+                    cond_state.Presence = True
+                    vis_signal.Presence = pm_types.AlertSignalPresence.ON
+                    aud_signal.Presence = pm_types.AlertSignalPresence.ON
+            elif new_temperature < LOW_TEMPERATURE_THRESHOLD:
+                with my_mdib.alert_state_transaction() as transaction_mgr:
+                    cond_state = transaction_mgr.get_state("limit.temperature.lower")
+                    vis_signal = transaction_mgr.get_state("signal.temperature.lower.visible")
+                    aud_signal = transaction_mgr.get_state("signal.temperature.lower.audible")
+
+                    cond_state.Presence = True
+                    vis_signal.Presence = pm_types.AlertSignalPresence.ON
+                    aud_signal.Presence = pm_types.AlertSignalPresence.ON
+        except Exception as e:
+            print(f"Warning: Failed to update temperature alert: {e}")
 
 
 
