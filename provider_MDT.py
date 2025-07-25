@@ -1,3 +1,17 @@
+#!/usr/bin/env python3
+"""
+SDC Provider for Medical Device Testing
+Provides physiological data via Service-oriented Device Connectivity (SDC).
+
+Copyright (c) 2025 Dr. L.M. van Loon. All Rights Reserved.
+
+This software is for academic research and educational purposes only.
+Commercial use is strictly prohibited without explicit written permission
+from Dr. L.M. van Loon.
+
+For commercial licensing inquiries, contact Dr. L.M. van Loon.
+"""
+
 from __future__ import annotations
 
 import sys
@@ -244,26 +258,6 @@ if __name__ == '__main__':
         new_etCO2 = dt_model.current_state[17]
 
         current_time_real = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-
-        # ----- Add random noise spikes -----
-        # 5% chance to add noise to heart rate
-        if random.random() < 0.05:
-            noise = random.uniform(20, 50)
-            new_heart_rate += noise
-            print(f"[{current_time_real}] Injected heart rate spike: +{noise:.1f}")
-
-        # 3% chance to add noise to blood pressure
-        if random.random() < 0.03:
-            noise = random.uniform(10, 25)
-            new_blood_pressure += noise
-            new_systolic_pressure += noise  # Also affect systolic
-            print(f"[{current_time_real}] Injected BP spike: +{noise:.1f}")
-            
-        # 2% chance to add fever spike to temperature
-        if random.random() < 0.02:
-            fever_spike = random.uniform(1.0, 3.0)
-            new_temperature += fever_spike
-            print(f"[{current_time_real}] Injected temperature spike: +{fever_spike:.1f}")
 
         try:
             with my_mdib.metric_state_transaction() as transaction_mgr:

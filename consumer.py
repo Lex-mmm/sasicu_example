@@ -1,3 +1,17 @@
+#!/usr/bin/env python3
+"""
+SDC Consumer for Medical Device Testing
+Consumes physiological data via Service-oriented Device Connectivity (SDC).
+
+Copyright (c) 2025 Dr. L.M. van Loon. All Rights Reserved.
+
+This software is for academic research and educational purposes only.
+Commercial use is strictly prohibited without explicit written permission
+from Dr. L.M. van Loon.
+
+For commercial licensing inquiries, contact Dr. L.M. van Loon.
+"""
+
 import logging
 import time
 import uuid

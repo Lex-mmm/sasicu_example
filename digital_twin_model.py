@@ -1,3 +1,17 @@
+#!/usr/bin/env python3
+"""
+Digital Twin Physiological Model
+Core physiological simulation engine for cardiovascular and respiratory systems.
+
+Copyright (c) 2025 Dr. L.M. van Loon. All Rights Reserved.
+
+This software is for academic research and educational purposes only.
+Commercial use is strictly prohibited without explicit written permission
+from Dr. L.M. van Loon.
+
+For commercial licensing inquiries, contact Dr. L.M. van Loon.
+"""
+
 import numpy as np
 from scipy.signal import butter, filtfilt
 from scipy.integrate import solve_ivp
