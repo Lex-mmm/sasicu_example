@@ -2,7 +2,7 @@
 
 A professional-grade medical device simulation system using the **SDC11073** protocol for real-time physiological monitoring and parameter control. Features advanced pathophysiological modeling, dynamic GUI interfaces, and comprehensive alarm management.
 
-## 📄 License & Usage Rights
+## 📄 License & Usage Rights 
 
 **© 2025 Dr. L.M. van Loon. All Rights Reserved.**
 
