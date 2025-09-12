@@ -1,6 +1,6 @@
-# 🏥 Digital Twin Physiological Monitoring System
+# 🏥 SDC Digital Twin Medical Monitoring System
 
-A real-time physiological simulation and monitoring system with interactive parameter adjustment capabilities. Perfect for medical research, education, and cardiovascular/respiratory system modeling.
+A professional-grade medical device simulation system using the **SDC11073** protocol for real-time physiological monitoring and parameter control. Features advanced pathophysiological modeling, dynamic GUI interfaces, and comprehensive alarm management.
 
 ## 📄 License & Usage Rights
 
@@ -9,373 +9,377 @@ A real-time physiological simulation and monitoring system with interactive para
 This software is provided for **academic research and educational purposes only**. 
 
 ### ✅ Permitted Uses:
-- Academic research and study
-- Educational purposes in medical/engineering curricula
-- Non-commercial scientific investigations
-- Personal learning and experimentation
+- Academic research and medical education
+- Non-commercial scientific investigations  
+- Medical device protocol development
+- Physiological modeling research
 
 ### ❌ Prohibited Uses:
 - Commercial use or distribution
-- Integration into commercial products or services
-- Resale or licensing to third parties
-- Any profit-generating activities
+- Clinical patient monitoring (research only)
+- Integration into commercial medical products
 
 ### 📧 Commercial Licensing:
-For commercial use, licensing, or any questions regarding usage rights, please contact:
-**Dr. L.M. van Loon** - [Contact information to be provided]
+For commercial use or licensing inquiries, contact **Dr. L.M. van Loon**.
 
-*By using this software, you agree to these terms and acknowledge the intellectual property rights of Dr. L.M. van Loon.*
+---
 
 ## 📋 Table of Contents
 - [🚀 Quick Start](#-quick-start)
+- [🏥 System Architecture](#-system-architecture)
 - [📦 Installation](#-installation)
-- [🎯 Basic Usage](#-basic-usage)
-- [🔧 Advanced Features](#-advanced-features)
-- [👥 Patient Types](#-patient-types)
-- [📊 Parameter Adjustment](#-parameter-adjustment)
+- [🎮 Professional GUI](#-professional-gui)
+- [👥 Disease-Specific Patients](#-disease-specific-patients)
+- [⚠️ Alarm System](#️-alarm-system)
+- [🔧 Advanced Parameter Control](#-advanced-parameter-control)
 - [🛠️ Troubleshooting](#️-troubleshooting)
-- [📚 Technical Details](#-technical-details)
+- [📚 Technical Reference](#-technical-reference)
 
 ---
 
 ## 🚀 Quick Start
 
-Ready to see some physiological magic? Here's the fastest way to get started:
+### Fastest Way to Start:
 
-1. **Check your system (optional but recommended):**
+1. **System Check:**
    ```bash
    python3 system_check.py
    ```
-   This will verify everything is working properly! ✅
 
-2. **Run the launcher:**
+2. **Launch Main Monitor:**
    ```bash
-   python3 launcher.py
+   python3 sdc_monitor_control.py
    ```
 
-3. **Select a patient type** from the dropdown menu
+3. **Start Digital Twin Provider (new terminal):**
+   ```bash
+   python3 provider_MDT.py --adapter en0
+   ```
 
-4. **Click "Start Monitor"** 
+4. **Select Patient & Watch Real-time Data!** 🏥
 
-5. **Watch real-time physiological data!** 📊
+---
 
-6. **Experiment with parameters** using the adjustment panel
+## 🏥 System Architecture
 
-That's it! You're now monitoring a digital human! 🤖
+```
+┌─────────────────────┐    SDC11073     ┌─────────────────────┐
+│   Professional     │◄─────────────────►│   Digital Twin      │
+│   Monitor GUI       │    Protocol     │   Provider          │
+│ (sdc_monitor_control)│                 │ (provider_MDT.py)   │
+└─────────────────────┘                 └─────────────────────┘
+          │                                        │
+          ▼                                        ▼
+┌─────────────────────┐                 ┌─────────────────────┐
+│   Alarm System     │                 │  Physiological      │
+│   Management        │                 │  Digital Twin       │
+└─────────────────────┘                 │  Engine             │
+                                        └─────────────────────┘
+```
+
+### **Core Components:**
+- **`sdc_monitor_control.py`** - Professional medical device GUI with dynamic scaling
+- **`provider_MDT.py`** - SDC provider with advanced physiological simulation
+- **`digital_twin_model.py`** - Cardiovascular/respiratory mathematical model
+- **`alarm_module.py`** - Clinical-grade alarm management system
 
 ---
 
 ## 📦 Installation
 
-### Prerequisites
-- **Python 3.8 or higher** (check with `python3 --version`)
-- **macOS, Linux, or Windows**
+### Prerequisites:
+- **Python 3.8+**
+- **macOS/Linux** (Windows with WSL)
 
-### Required Libraries
+### SDC11073 Dependencies:
 ```bash
-pip install numpy scipy matplotlib tkinter
+pip install sdc11073 lxml numpy scipy matplotlib
 ```
 
-### File Structure
-Make sure you have these files:
-```
-📁 Your Project Folder/
-├── 📄 launcher.py          # Main launcher application
-├── 📄 direct_monitor.py    # Real-time monitor
-├── 📄 digital_twin_model.py # Physiological model
-├── 📄 list_patients.py     # Patient list utility
-├── 📄 healthyFlat.json     # Healthy patient parameters
-├── 📄 heartfailureFlat.json # Heart failure patient
-├── 📄 hypotensionFlat.json # Hypotension patient
-└── 📁 MDTparameters/       # Additional patient files
-    ├── patient_1.json
-    ├── patient_2.json
-    └── patient_3.json
-```
-
----
-
-## 🎯 Basic Usage
-
-### Method 1: Using the Launcher (Recommended)
-
-1. **Start the Launcher**
-   ```bash
-   python3 launcher.py
-   ```
-
-2. **Select Patient Type**
-   - Choose from dropdown: Healthy, Heart Failure, Hypotension, etc.
-   - Each patient has different baseline physiological parameters
-
-3. **Start Monitoring**
-   - Click **"Start Monitor"** button
-   - A new window opens showing real-time data
-
-4. **View Real-time Data**
-   - 8 parameter cards showing live values
-   - Trend indicators (↗ ↙ →) showing changes
-   - Event log with system messages
-
-### Method 2: Direct Command Line
-
+### Complete Installation:
 ```bash
-# Monitor healthy patient
-python3 direct_monitor.py --patient healthyFlat.json
+# Clone or download the project
+cd sasicu_example
 
-# Monitor heart failure patient  
-python3 direct_monitor.py --patient heartfailureFlat.json
+# Install all dependencies
+pip install -r requirements.txt
 
-# Monitor hypotension patient
-python3 direct_monitor.py --patient hypotensionFlat.json
+# Verify SSL certificates exist
+ls ssl/
+# Should show: cacert.pem, usercert.pem, userkey.pem
+
+# Run system check
+python3 system_check.py
 ```
 
 ---
 
-## 🔧 Advanced Features
+## 🎮 Professional GUI
 
-### Real-time Parameter Adjustment
+### Main Interface: `sdc_monitor_control.py`
 
-The monitor includes a **Parameter Adjustment Panel** that lets you modify physiological parameters while the simulation is running!
+**Features:**
+- 🎨 **Professional medical device styling** with dark theme
+- 📏 **Dynamic font scaling** - vital signs auto-scale to box size
+- 📊 **Real-time SDC data streaming** from medical device protocol
+- ⚠️ **Comprehensive alarm system** with visual/audio alerts
+- 🔧 **Advanced parameter controls** with apply buttons
+- 📈 **Connection status monitoring** with timeout detection
 
-#### Available Parameters:
-1. **Total Blood Volume (TBV)**: 3000-8000 mL
-   - *Effect*: Higher volume → Higher blood pressure
-   
-2. **Nominal Heart Rate**: 40-150 bpm
-   - *Effect*: Direct control of heart rate baseline
-   
-3. **Pressure Setpoint**: 60-140 mmHg
-   - *Effect*: Target blood pressure for regulation
-   
-4. **Baseline Respiratory Rate**: 8-30 bpm
-   - *Effect*: Controls breathing pattern and gas exchange
+**Monitored Parameters:**
+- Heart Rate (HR) - bpm
+- Mean/Systolic/Diastolic Blood Pressure - mmHg  
+- Body Temperature - °C
+- Oxygen Saturation (SpO2) - %
+- Respiratory Rate (RR) - bpm
+- End-tidal CO2 (EtCO2) - mmHg
 
-#### How to Adjust Parameters:
-1. **Find the Parameter Panel** (below the data cards)
-2. **Use the Sliders** to adjust values
-3. **Watch Real-time Changes** in the parameter cards above
-4. **Check Event Log** for confirmation of changes
+### Key Interface Elements:
 
-#### Example Experiments:
-- **Blood Volume Study**: Increase TBV from 4000→6000 mL, observe blood pressure changes
-- **Heart Rate Response**: Adjust HR from 70→100 bpm, see cardiovascular adaptation  
-- **Respiratory Analysis**: Change RR from 12→20 bpm, monitor SpO2 and EtCO2
+#### 🔴 **Vital Signs Display**
+- Large, color-coded parameter cards
+- Dynamic font sizing based on window size
+- Trend indicators (↗ ↙ →)
+- Real-time value updates
 
-### Control Buttons
+#### 🚨 **Alarm Status Panel**
+- Parameter-specific alarm indicators
+- Visual alarm status overview
+- Configurable alarm thresholds
+- Patient profile-specific limits
 
-- **Start/Stop Simulation**: Pause or resume the physiological simulation
-- **Reset**: Return to initial patient parameters and restart
-- **▼/▶ Show/Hide Controls**: Toggle parameter adjustment panel
-
----
-
-## 👥 Patient Types
-
-### Available Patients
-
-| Patient Type | File | Description |
-|-------------|------|-------------|
-| **Healthy Patient** | `healthyFlat.json` | Normal physiological parameters |
-| **Heart Failure** | `heartfailureFlat.json` | Reduced cardiac function |
-| **Hypotension** | `hypotensionFlat.json` | Low blood pressure condition |
-| **Patient 1-3** | `MDTparameters/patient_*.json` | Additional parameter sets |
-
-### Physiological Differences
-
-**Healthy Patient:**
-- HR: ~70 bpm, BP: ~120/80 mmHg, SpO2: ~98%
-
-**Heart Failure Patient:**
-- Reduced ejection fraction, compensatory tachycardia
-- Lower cardiac output, potential fluid retention
-
-**Hypotension Patient:**
-- Consistently lower blood pressure values
-- Potential compensatory mechanisms active
-
-### Adding New Patients
-
-1. **Create JSON file** with patient parameters
-2. **Name it** with "Flat" in filename (e.g., `diabeticFlat.json`)
-3. **Place in main folder** or `MDTparameters/` folder
-4. **Restart launcher** - it will auto-detect the new patient
+#### ⚙️ **Parameter Control Panel**
+- FiO2 control (0-100%)
+- Blood volume adjustment
+- Heart rate/pressure setpoints
+- Temperature control
+- Baroreflex/Chemoreceptor toggles
 
 ---
 
-## 📊 Parameter Adjustment
+## 👥 Disease-Specific Patients
 
-### Understanding Parameter Effects
+### Available Patient Profiles:
 
-#### Total Blood Volume (TBV)
-- **Normal Range**: 4000-6000 mL
-- **Low Volume (3000 mL)**: Hypotension, tachycardia
-- **High Volume (7000+ mL)**: Hypertension, possible edema
+#### 🫀 **Heart Failure (heartfailure.json)**
+- **Pathophysiology**: Reduced ventricular contractility
+- **Key Changes**: 44-45% reduction in elastance values
+- **Expected Signs**: ↓ MAP, ↑ HR (compensatory), reduced stroke volume
 
-#### Heart Rate (HR_n)
-- **Normal**: 60-100 bpm
-- **Bradycardia (<60)**: Potential low cardiac output
-- **Tachycardia (>100)**: Increased oxygen demand
+#### 🫁 **COPD (COPD.json)** 
+- **Pathophysiology**: Increased airway resistance
+- **Key Changes**: 150-175% increase in airway resistances
+- **Expected Signs**: ↑ RR, ↑ EtCO2, air trapping, possible hypoxemia
 
-#### Pressure Setpoint (Pset)
-- **Normal**: 90-110 mmHg (MAP target)
-- **Low Setpoint**: Hypotensive state simulation
-- **High Setpoint**: Hypertensive condition modeling
+#### 🦠 **Pneumonia (pneumonia.json)**
+- **Pathophysiology**: Fever + impaired gas exchange
+- **Key Changes**: Temperature → 38.8°C, 34% reduction in O2 diffusion
+- **Expected Signs**: ↑ Temp, ↓ SpO2, ↑ RR, ↑ HR, increased O2 consumption
 
-#### Respiratory Rate (RR_0)
-- **Normal**: 12-20 bpm
-- **Low Rate**: Potential CO2 retention
-- **High Rate**: Hyperventilation, low CO2
+#### 👶 **Neonate (neonate.json)**
+- **Pathophysiology**: Immature physiological systems
+- **Key Changes**: Adjusted ranges for neonatal physiology
+- **Expected Signs**: Higher baseline HR, different pressure ranges
 
-### Real-time Monitoring Tips
+#### ✅ **Healthy (healthy.json)**
+- **Baseline**: Normal adult physiological parameters
+- **Reference**: Standard values for comparison
 
-1. **Make Small Changes**: Adjust parameters gradually
-2. **Observe Trends**: Look for ↗↙→ indicators on cards
-3. **Check Event Log**: Confirms parameter changes
-4. **Wait for Stabilization**: Allow 10-20 seconds between changes
+### Patient Selection:
+- Choose patient profile in GUI dropdown
+- Provider automatically adjusts baseline parameters
+- Temperature defaults loaded from patient file
+- Alarm thresholds adapt to patient type
+
+---
+
+## ⚠️ Alarm System
+
+### Clinical-Grade Alarm Management:
+
+#### **Alarm Parameters:**
+- Heart Rate: Bradycardia/Tachycardia detection
+- Blood Pressure: Hypotension/Hypertension monitoring  
+- SpO2: Hypoxemia detection
+- Temperature: Hypothermia/Hyperthermia alerts
+- Respiratory Rate: Apnea/Tachypnea detection
+- EtCO2: Hypo/Hypercapnia monitoring
+
+#### **Patient Profile Adaptation:**
+- **Adult**: HR 60-100, MAP 65-110, SpO2 >90%
+- **Neonatal**: HR 100-180, MAP 35-60, SpO2 >85%
+- **Pediatric**: HR 80-140, MAP 50-90, customized ranges
+
+#### **Alarm Features:**
+- Visual status indicators with color coding
+- Configurable thresholds per parameter
+- Enable/disable individual alarms
+- Real-time alarm evaluation
+- Event logging with timestamps
+
+---
+
+## 🔧 Advanced Parameter Control
+
+### Real-Time Parameter Adjustment:
+
+#### **FiO2 Control**
+- **Range**: 0-100% (including hypoxic conditions)
+- **Application**: Research scenarios, altitude simulation
+- **Controls**: Slider + Apply button for precise control
+
+#### **Hemodynamic Parameters**
+- **Blood Volume**: 3000-6000 mL
+- **HR Setpoint**: 40-150 bpm
+- **MAP Setpoint**: 50-130 mmHg
+- **Effects**: Real-time cardiovascular changes
+
+#### **Temperature Control**
+- **Range**: 35.0-42.0°C
+- **Patient-Specific**: Defaults from patient profiles
+- **Features**: Fever simulation, hypothermia studies
+
+#### **Physiological Reflex Controls**
+
+**Baroreflex Toggle:**
+- **ON**: Normal cardiovascular pressure regulation
+- **OFF**: Removes pressure feedback (research mode)
+- **Applications**: Study isolated cardiovascular responses
+
+**Chemoreceptor Toggle:**
+- **ON**: Normal respiratory gas regulation  
+- **OFF**: Removes O2/CO2 feedback (research mode)
+- **Applications**: Study breathing pattern changes
+
+### Usage Workflow:
+1. Adjust slider to desired value
+2. Observe real-time preview
+3. Click **Apply** to implement change
+4. Monitor physiological response
+5. Check event log for confirmation
 
 ---
 
 ## 🛠️ Troubleshooting
 
-### Common Issues
+### Common Issues:
 
-#### "Digital twin model not found"
-**Solution:**
+#### **"No SDC Provider Found"**
 ```bash
-# Check if file exists
-ls digital_twin_model.py
+# Check if provider is running
+ps aux | grep provider_MDT
 
-# Make sure you're in the right directory
-pwd
+# Restart provider with correct adapter
+python3 provider_MDT.py --adapter en0
+
+# Check network adapter
+ifconfig
 ```
 
-#### "No patient files found"
-**Solution:**
+#### **"GUI Shows Disconnected"**
+- Verify provider is outputting data
+- Check 30-second timeout hasn't occurred
+- Restart both provider and GUI
+- Verify SSL certificates in ssl/ folder
+
+#### **"Parameter Changes Not Working"**
+- Ensure provider is running
+- Check parameter update file permissions
+- Verify Apply button is clicked (not just slider)
+- Monitor event log for error messages
+
+#### **"Alarm System Not Working"**
+- Check alarm configuration file: `alarm_config.json`
+- Verify patient profile selection
+- Ensure alarm parameters are enabled
+- Check threshold values are reasonable
+
+### Debug Tools:
 ```bash
-# List available patients
-python3 list_patients.py
+# Test SDC connection
+python3 test_connection.py
 
-# Check if JSON files exist
-ls *.json
-```
+# Console monitor for debugging
+python3 console_monitor.py
 
-#### Monitor window won't open
-**Solution:**
-1. Check Python version: `python3 --version` (need 3.8+)
-2. Install required packages: `pip install numpy scipy matplotlib tkinter`
-3. Try direct command: `python3 direct_monitor.py`
-
-#### Parameter changes not working
-**Solution:**
-1. Make sure simulation is **running** (not stopped)
-2. Check that parameter panel is **visible** (click ▼ to expand)
-3. Look for error messages in event log
-
-### Performance Tips
-
-- **Close unused monitors** - each patient runs separately
-- **Adjust sampling interval** if system is slow
-- **Use reset button** if simulation becomes unstable
-
----
-
-## 📚 Technical Details
-
-### System Architecture
-
-```
-┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
-│   Launcher      │───▶│  Direct Monitor  │───▶│ Digital Twin    │
-│   (Patient      │    │  (GUI + Control) │    │ Model (Math)    │
-│   Selection)    │    │                  │    │                 │
-└─────────────────┘    └──────────────────┘    └─────────────────┘
-```
-
-### Monitored Parameters
-
-| Parameter | Unit | Description | Typical Range |
-|-----------|------|-------------|---------------|
-| **Heart Rate** | bpm | Beats per minute | 60-100 |
-| **Mean ABP** | mmHg | Mean arterial pressure | 70-110 |
-| **Systolic BP** | mmHg | Peak arterial pressure | 100-140 |
-| **Diastolic BP** | mmHg | Minimum arterial pressure | 60-90 |
-| **Temperature** | °C | Body temperature | 36.5-37.5 |
-| **SpO2** | % | Oxygen saturation | 95-100 |
-| **Resp. Rate** | bpm | Breaths per minute | 12-20 |
-| **EtCO2** | mmHg | End-tidal CO2 | 35-45 |
-
-### Simulation Details
-
-- **Integration Method**: LSODA (adaptive solver)
-- **Time Step**: 2 seconds
-- **Update Frequency**: Real-time
-- **Pressure Calculation**: Rolling window average
-- **Temperature Model**: Circadian + random variation
-
-### File Formats
-
-**Patient Parameter Files (JSON):**
-```json
-{
-  "cardio_control_params.HR_n": {"value": 70},
-  "misc_constants.TBV": {"value": 5000},
-  "initial_conditions.Pset": {"value": 90},
-  "respiratory_control_params.RR_0": {"value": 12}
-}
+# Direct value testing
+python3 test_direct_values.py
 ```
 
 ---
 
-## 🆘 Need Help?
+## 📚 Technical Reference
 
-### Quick Commands Reference
+### File Structure:
+```
+📁 sasicu_example/
+├── 🏥 Core Applications
+│   ├── sdc_monitor_control.py    # Main professional GUI
+│   ├── provider_MDT.py          # SDC provider
+│   └── digital_twin_model.py    # Physiological engine
+├── 👥 Patient Profiles  
+│   └── MDTparameters/
+│       ├── healthy.json         # Normal physiology
+│       ├── heartfailure.json    # Heart failure
+│       ├── COPD.json           # COPD simulation
+│       ├── pneumonia.json      # Pneumonia + fever
+│       └── neonate.json        # Neonatal parameters
+├── ⚠️ Alarm System
+│   ├── alarm_module.py         # Alarm logic
+│   ├── alarm_config.json       # Configuration
+│   └── sdc_alarm_manager.py    # SDC integration
+└── 🔧 Development Tools
+    ├── debug_monitor.py        # Simple data reader
+    ├── console_monitor.py      # Terminal monitor
+    └── test_*.py              # Testing utilities
+```
 
+### Protocol Details:
+- **SDC11073**: ISO/IEEE 11073 Service-oriented Device Connectivity
+- **Discovery**: WS-Discovery for automatic provider detection
+- **Security**: TLS with mutual authentication
+- **Data Format**: Real-time metric streaming
+
+### Physiological Model:
+- **Cardiovascular**: Multi-compartment pressure-volume relationships
+- **Respiratory**: Gas exchange with diffusion limitations  
+- **Control Systems**: Baroreflex, chemoreceptor feedback
+- **Pathophysiology**: Disease-specific parameter modifications
+
+### Performance:
+- **Update Rate**: Real-time (1-2 second intervals)
+- **Connection Monitoring**: 30-second timeout detection
+- **Resource Usage**: Low CPU, minimal memory footprint
+- **Scalability**: Multiple simultaneous connections supported
+
+---
+
+## 🆘 Support & Contact
+
+### Quick Reference Commands:
 ```bash
-# Start everything (easiest)
-python3 launcher.py
+# Start system
+python3 sdc_monitor_control.py
 
-# Monitor specific patient
-python3 direct_monitor.py --patient healthyFlat.json
+# Start provider
+python3 provider_MDT.py --adapter en0
 
-# List all available patients
-python3 list_patients.py
+# System check
+python3 system_check.py
 
-# Check system status
-python3 -c "import numpy, scipy, tkinter; print('✓ All libraries OK')"
+# Debug connection
+python3 test_connection.py
 ```
 
-### Contact & Support
-
-- Check the event log in the monitor for error messages
-- Make sure all `.json` files are in the correct location
-- Verify Python 3.8+ is installed
-- Try restarting the launcher if issues persist
-
----
-
-## 🎉 You're Ready to Go!
-
-1. **Run**: `python3 launcher.py`
-2. **Select**: A patient type
-3. **Start**: The monitor
-4. **Experiment**: With parameter adjustments
-5. **Observe**: Real-time physiological responses
-
-**Happy monitoring!** 🏥✨
+### Research Applications:
+- Medical device protocol development
+- Physiological simulation and modeling
+- Medical education and training
+- Alarm system validation
+- Pathophysiology research
 
 ---
+
+**© 2025 Dr. L.M. van Loon. Academic and educational use permitted.**
 
 *This system is designed for research and educational purposes. Always validate results with clinical data when appropriate.*
-
----
-
-## 📄 Copyright & License
-
-**© 2025 Dr. L.M. van Loon. All Rights Reserved.**
-
-This Digital Twin Physiological Monitoring System is protected by copyright law. Commercial use is strictly prohibited without explicit written permission from Dr. L.M. van Loon. 
-
-For licensing inquiries or commercial use requests, please contact Dr. L.M. van Loon directly.
-
-**Academic and educational use is encouraged and permitted under these terms.**

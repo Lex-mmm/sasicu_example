@@ -1,0 +1,90 @@
+{
+  "version": "1.0",
+  "patient_profile": "adult",
+  "alarm_parameters": {
+    "SpO2": {
+      "enabled": true,
+      "lower_limit": 90.0,
+      "upper_limit": 100.0,
+      "critical_low": 85.0,
+      "critical_high": null,
+      "hysteresis": 2.0,
+      "message_low": "Low Oxygen Saturation",
+      "message_high": "High Oxygen Saturation",
+      "priority_low": "HIGH",
+      "priority_high": "MEDIUM"
+    },
+    "HeartRate": {
+      "enabled": true,
+      "lower_limit": 60.0,
+      "upper_limit": 70.0,
+      "critical_low": 80.0,
+      "critical_high": 180.0,
+      "hysteresis": 5.0,
+      "message_low": "Bradycardia",
+      "message_high": "Tachycardia",
+      "priority_low": "HIGH",
+      "priority_high": "HIGH"
+    },
+    "BloodPressureSystolic": {
+      "enabled": true,
+      "lower_limit": 60.0,
+      "upper_limit": 90.0,
+      "critical_low": 45.0,
+      "critical_high": 110.0,
+      "hysteresis": 10.0,
+      "message_low": "Hypotension",
+      "message_high": "Hypertension",
+      "priority_low": "HIGH",
+      "priority_high": "MEDIUM"
+    },
+    "BloodPressureDiastolic": {
+      "enabled": true,
+      "lower_limit": 60.0,
+      "upper_limit": 90.0,
+      "critical_low": 40.0,
+      "critical_high": 110.0,
+      "hysteresis": 5.0,
+      "message_low": "Low Diastolic Pressure",
+      "message_high": "High Diastolic Pressure",
+      "priority_low": "MEDIUM",
+      "priority_high": "MEDIUM"
+    },
+    "BloodPressureMean": {
+      "enabled": true,
+      "lower_limit": 65.0,
+      "upper_limit": 110.0,
+      "critical_low": 25.0,
+      "critical_high": 75.0,
+      "hysteresis": 5.0,
+      "message_low": "Low Mean Arterial Pressure",
+      "message_high": "High Mean Arterial Pressure",
+      "priority_low": "HIGH",
+      "priority_high": "MEDIUM"
+    },
+    "Temperature": {
+      "enabled": true,
+      "lower_limit": 36.0,
+      "upper_limit": 38.5,
+      "critical_low": 35.0,
+      "critical_high": 40.0,
+      "hysteresis": 0.3,
+      "message_low": "Hypothermia",
+      "message_high": "Hyperthermia",
+      "priority_low": "MEDIUM",
+      "priority_high": "MEDIUM"
+    },
+    "RespiratoryRate": {
+      "enabled": true,
+      "lower_limit": 12.0,
+      "upper_limit": 25.0,
+      "critical_low": 20.0,
+      "critical_high": 70.0,
+      "hysteresis": 2.0,
+      "message_low": "Bradypnea",
+      "message_high": "Tachypnea",
+      "priority_low": "MEDIUM",
+      "priority_high": "MEDIUM"
+    }
+  }
+}

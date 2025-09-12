@@ -1,8 +1,8 @@
 {
     "params.M_O2": {
-        "value": 5.2,
+        "value": 6.7,
         "min": 5.2,
-        "max": 5.2
+        "max": 8.0
     },
 
     "params.V_Btis_O2": {
@@ -604,9 +604,14 @@
         "min": 6,
         "max": 36
     }, "misc_constants.TBV":{
-        "value": 4500,
+        "value": 5000,
         "min": 3000,
         "max": 7000
+    }, "misc_constants.TEMP":{
+        "_comment": "Body temperature in Celsius - elevated baseline for pneumonia patient",
+        "value": 38.8,
+        "min": 35.0,
+        "max": 42.0
     }, "misc_constants.T":{
         "value": 0.01,
         "min": 0.01,
@@ -745,8 +750,8 @@
         "max": 12.48
     },
     "params.D_T_O2": {
-        "value": 24.96,
-        "min": 24.96,
+        "value": 16.5,
+        "min": 10.0,
         "max": 24.96
     },
     "gas_exchange_params.D_S_CO2": {
@@ -760,13 +765,13 @@
         "max": 12.48
     },
     "gas_exchange_params.D_S_O2": {
-        "value": 24.96,
-        "min": 24.96,
+        "value": 16.5,
+        "min": 10.0,
         "max": 24.96
     },
     "gas_exchange_params.D_B_O2": {
-        "value": 24.96,
-        "min": 24.96,
+        "value": 16.5,
+        "min": 10.0,
         "max": 24.96
     },
     "initial_conditions.c_Bcap_CO2": {
