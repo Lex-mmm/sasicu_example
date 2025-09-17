@@ -1,9 +1,24 @@
+#!/usr/bin/env python3
+"""
+Digital Twin Physiological Model
+Core physiological simulation engine for cardiovascular and respiratory systems.
+
+Copyright (c) 2025 Dr. L.M. van Loon. All Rights Reserved.
+
+This software is for academic research and educational purposes only.
+Commercial use is strictly prohibited without explicit written permission
+from Dr. L.M. van Loon.
+
+For commercial licensing inquiries, contact Dr. L.M. van Loon.
+"""
+
 import numpy as np
-from scipy.signal import butter, filtfilt
+from scipy.signal import butter, filtfilt, sosfiltfilt
 from scipy.integrate import solve_ivp
 from collections import deque
 import time, json
 from datetime import datetime, timedelta
+from typing import Optional, Any
 
 
 class DigitalTwinModel:
@@ -27,6 +42,10 @@ class DigitalTwinModel:
         self.t = 0
         self.data_callback = data_callback
         self.sleep = sleep
+        # Ensure external integrations exist; can be wired up later
+        self.redisClient = None
+        self.alarmModule: Optional[Any] = None  # Will be AlarmModule instance
+        self.pathologies = None
 
     def _initialize_timing_attributes(self):
         """Initialize timing-related attributes."""
@@ -36,6 +55,8 @@ class DigitalTwinModel:
 
     def _initialize_modules(self):
         """Initialize external modules like pathologies, therapies, and alarms."""
+    # Placeholder for wiring external modules if needed
+    pass
 
 
     def _initialize_events_and_data(self):
@@ -62,15 +83,18 @@ class DigitalTwinModel:
         self._setup_simulation_environment()
         self.current_state = self.initialize_state()
         self.current_heart_rate = 0  # Initialize monitored value
-        self.use_reflex = True  # Set to False if you want to skip reflex calculations
+        # Global reflex gate stays enabled so per-reflex toggles work; set individual reflexes OFF by default
+        self.use_reflex = True  # Set to False if you want to skip reflex calculations entirely
+        self.use_baroreflex = False  # Default OFF
+        self.use_chemoreceptor = False  # Default OFF
         self.AF = 0  # Atrial Fibrillation flag
         self.Fes_delayed = [2.66] * int(2 / self.dt)
         self.Fev_delayed = [4.66] * int(0.2 / self.dt)
-        
+
         # Chemoreceptor delayed buffers
         self.p_CO2_delayed = [40.0] * int(self._chemo_delay_CO2 / self.dt)
         self.p_O2_delayed = [100.0] * int(self._chemo_delay_O2 / self.dt)
-        
+
         # Simple cycle tracking
         self.last_cycle_start = 0.0  # Track when last cycle started
 
@@ -480,10 +504,17 @@ class DigitalTwinModel:
         F[8] = (P[8] - P[9]) / self.resistance[8] if P[8] - P[9] > 0 else 0
         F[9] = (P[9] - P[0]) / self.resistance[9] if P[9] - P[0] > 0 else 0
 
-        # Compute heart rate
-        HR = self.master_parameters['cardio_control_params.HR_n']['value'] - y[26]  # Delta_HR_c is y[26]
-        # Compute respiratory rate
-        RR = self.master_parameters['respiratory_control_params.RR_0']['value'] + y[23]  # Delta_RR_c is y[23]
+        # Compute heart rate with reflex modulation
+        HR_n = self.master_parameters['cardio_control_params.HR_n']['value']
+        RR0 = self.master_parameters['respiratory_control_params.RR_0']['value']
+        
+        # Get reflex state variables
+        dHRv, dHRs = y[30], y[31]  # Baroreflex HR modulations
+        dRR_chemo = y[33]  # Chemoreceptor RR modulation
+        
+        # Apply reflex modulation to HR and RR (same logic as in extended_state_space_equations)
+        HR = 60/(60/HR_n + dHRv + dHRs) if (self.use_reflex and self.use_baroreflex) else HR_n
+        RR = RR0 + dRR_chemo if (self.use_reflex and self.use_chemoreceptor) else RR0
         # Compute SaO2
         p_a_O2 = y[18]
         CaO2 = (self.master_parameters['params.K_O2']['value'] * np.power((1 - np.exp(-self.master_parameters['params.k_O2']['value'] * min(p_a_O2, 700))), 2)) * 100
@@ -523,16 +554,17 @@ class DigitalTwinModel:
 
         return np.array([0, dPmus_dt])
     
-    def compute_filtered_map(self,buffer):
+    def compute_filtered_map(self, buffer):
         # fs = sample rate (Hz), cutoff = cutoff frequency (Hz)
-        fs=1/self.dt
-        cutoff=1
+        fs = 1 / self.dt
+        cutoff = 1
         if len(buffer) < 10:
-            return np.mean(buffer)
+            return float(np.mean(buffer))
         if fs is None or cutoff is None or fs <= 0 or cutoff <= 0:
-            return np.mean(buffer)
-        b, a = butter(N=2, Wn=cutoff / (0.5 * fs), btype='low')
-        return filtfilt(b, a, buffer)[-1]
+            return float(np.mean(buffer))
+        # Use second-order sections to avoid tuple-unpacking typing issues
+        sos = butter(N=2, Wn=cutoff / (0.5 * fs), btype='low', output='sos')
+        return float(sosfiltfilt(sos, buffer)[-1])
 
     def extended_state_space_equations(self, t, x):
         """
@@ -567,12 +599,22 @@ class DigitalTwinModel:
         #HR = 60 / HP  # update HR for output tracking or logging if needed
 
         # Calculate desired HR from baroreflex and central control
-        HR = 60/(60/HR_n + dHRv + dHRs) if self.use_reflex == True else HR_n
+        HR = 60/(60/HR_n + dHRv + dHRs) if (self.use_reflex and self.use_baroreflex) else HR_n
         #R_c = R_n + dRs if self.use_reflex == True else 1 
         R_c=1
         UV_c = UV_n
         # Apply chemoreceptor control to respiratory parameters
-        RR = RR0 + dRR_chemo if self.use_reflex else RR0
+        RR = RR0 + dRR_chemo if (self.use_reflex and self.use_chemoreceptor) else RR0
+        
+        # Debug reflex effects (every 10 seconds to avoid spam)
+        if hasattr(self, '_last_reflex_debug') and self.t - self._last_reflex_debug > 10:
+            if self.use_baroreflex and abs(dHRv + dHRs) > 0.1:
+                print(f"BAROREFLEX ACTIVE: HR change = {(dHRv + dHRs):.2f}, Final HR = {HR:.1f}")
+            if self.use_chemoreceptor and abs(dRR_chemo) > 0.1:
+                print(f"CHEMORECEPTOR ACTIVE: RR change = {dRR_chemo:.2f}, Final RR = {RR:.1f}")
+            self._last_reflex_debug = self.t
+        elif not hasattr(self, '_last_reflex_debug'):
+            self._last_reflex_debug = self.t
 
         if RR < self._ode_RR0_min:
             RR = self._ode_RR0_min
@@ -654,13 +696,13 @@ class DigitalTwinModel:
 
         #print(P[0], F[0], self.elastance[0,0], Pbarodt, dHRv, dHRs, dRs)
         # Baroreflex control
-        if self.use_reflex== True:
+        if self.use_reflex and self.use_baroreflex:
             dPbarodt, ddHRv, ddHRs, ddRs = self.baroreceptor_control(P[0], dVdt[0], self.elastance[0,0], Pbarodt, dHRv, dHRs, dRs)
         else:
             dPbarodt, ddHRv, ddHRs, ddRs = 0, 0, 0, 0
             
         # Chemoreceptor control
-        if self.use_reflex == True:
+        if self.use_reflex and self.use_chemoreceptor:
             ddRR_chemo, ddPmus_chemo = self.chemoreceptor_control(p_a_CO2, p_a_O2, dRR_chemo, dPmus_chemo)
         else:
             ddRR_chemo, ddPmus_chemo = 0, 0
@@ -940,7 +982,11 @@ class DigitalTwinModel:
                     }
                 }
 
-                self.redisClient.add_vital_sign(self.patient_id, avg_data)
+                self.data_epoch.append(avg_data)
+                self.data_epoch = self.data_epoch[-self.data_points:]
+
+                if self.redisClient:
+                    self.redisClient.add_vital_sign(self.patient_id, avg_data)
 
                 if not isinstance(self.data_epoch, list):
                     self.data_epoch = []
@@ -948,7 +994,8 @@ class DigitalTwinModel:
                 self.data_epoch.append(avg_data)
                 self.data_epoch = self.data_epoch[-self.data_points:]
 
-                self.alarmModule.evaluate_data(curr_data=avg_data, historic_data=self.data_epoch)
+                if self.alarmModule:
+                    self.alarmModule.evaluate_data(curr_data=avg_data, historic_data=self.data_epoch)
                 last_emit_time = self.t
                 #print(avg_data)
             # Periodic logging (optional)
@@ -1001,7 +1048,10 @@ class DigitalTwinModel:
                         ## get the current value of the parameter
                         currValue = self.master_parameters[paramName]['value']
                         ## get the current percentage of the parameter
-                        currPercent = self.pathologies.CalcParamPercent(currValue, paramName)
+                        if self.pathologies:
+                            currPercent = self.pathologies.CalcParamPercent(currValue, paramName)
+                        else:
+                            currPercent = 100  # Default when pathologies not available
 
                         if paramChange['action'] == 'decay':
                             ## decay the parameter
@@ -1013,8 +1063,12 @@ class DigitalTwinModel:
                             break # break from inner loop
 
                         ## get the actual value for the parameter in non-percentualness
-                        splineFunction = self.pathologies.splineFunctions[paramName]
-                        newValue = splineFunction(currPercent)
+                        if self.pathologies:
+                            splineFunction = self.pathologies.splineFunctions[paramName]
+                            newValue = splineFunction(currPercent)
+                        else:
+                            # Simple fallback when pathologies not available
+                            newValue = currValue  # Keep current value
                         ## Update the parameter in the model
                         self.master_parameters[paramName]['value'] = newValue
                         parameters_changed_by_event.append(paramName)
@@ -1142,6 +1196,27 @@ class DigitalTwinModel:
                             attr[param][loc] = float(value)
                 else:
                     attr[param] = float(value)
+                
+                # Update cached _ode_ variables when corresponding parameters change
+                if param == "FI_O2":
+                    self._ode_FI_O2 = float(value)
+                elif param == "FI_CO2":
+                    self._ode_FI_CO2 = float(value)
+                elif param == "HR_n":
+                    self._ode_HR_n = float(value)
+                elif param == "RR_0":
+                    self._ode_RR0 = float(value)
+                elif param == "CO":
+                    self._ode_CO_nom = float(value)
+                elif param == "sh":
+                    self._ode_shunt = float(value)
+                elif param == "MV":
+                    self._ode_MV_mode = float(value)
+                elif param == "R_n":
+                    self._ode_R_n = float(value)
+                elif param == "UV_n":
+                    self._ode_UV_n = float(value)
+                
                 return {"status": f"Parameter {param} updated to {value} for patient {patient_id}"}
                 #break
         else: 
