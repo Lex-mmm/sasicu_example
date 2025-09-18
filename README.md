@@ -383,3 +383,21 @@ python3 test_connection.py
 **© 2025 Dr. L.M. van Loon. Academic and educational use permitted.**
 
 *This system is designed for research and educational purposes. Always validate results with clinical data when appropriate.*
+
+---
+
+## 🔗 SDC Demo Suite (Provider ↔ Monitor ↔ Consumer)
+
+The file `sdc_demo_suite.py` runs a complete end-to-end SDC-style workflow, entirely driven by the Digital Twin model:
+
+- Provider window: publishes model-derived metrics and an ABP waveform; shows alarm state and accepts set_request operations.
+- Message Monitor: logs all messages with timestamps, direction, type (metric_report, waveform_chunk, alert_report, set_request/response, keepalive) and allows export to NDJSON.
+- Consumer window: mirrors vitals and offers controls for HR_set, ABP_set, RR_set, FiO2_set; also Alarm Silence/Reset via ALERT_CTRL.
+
+Run locally:
+
+```bash
+./env/bin/python3 sdc_demo_suite.py
+```
+
+Scenarios can be selected in the Consumer window and are applied as parameter bundles to the model (no UI constants). You can customize scenarios in an optional `scenarios.json` at the project root. All alarms and thresholds are evaluated by the model/alarm module.

@@ -1,0 +1,16 @@
+{
+  "Sepsis": {
+    "gas_exchange_params.FI_O2": 60,
+    "cardio_control_params.HR_n": 110,
+    "cardio_control_params.ABP_n": 65,
+    "misc_constants.TBV": 4500
+  },
+  "COPD": {
+    "gas_exchange_params.FI_O2": 28,
+    "respiratory_control_params.RR_0": 20
+  },
+  "Hypotension": {
+    "cardio_control_params.ABP_n": 55,
+    "cardio_control_params.HR_n": 95
+  }
+}
