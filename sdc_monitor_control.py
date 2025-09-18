@@ -116,6 +116,16 @@ class SDCDigitalTwinMonitor:
         # Consumer is default OFF - user needs to start manually via button
         self.log_queue.put("📡 SDC Consumer: Default OFF - use control button to start")
 
+    def _resolve_python_interpreter(self):
+        """Prefer the workspace venv's python if present; fallback to current interpreter."""
+        try:
+            venv_py = os.path.join(os.getcwd(), "env", "bin", "python3")
+            if os.path.exists(venv_py):
+                return venv_py
+        except Exception:
+            pass
+        return sys.executable or "python3"
+
     def create_theme(self):
         """Configure a consistent, modern ttk theme and widget styles."""
         try:
@@ -207,8 +217,9 @@ class SDCDigitalTwinMonitor:
             self.log_queue.put("🔍 Starting SDC consumer...")
             self.sdc_messages_queue.put("SDC Consumer: Starting consumer process...")
             
-            # Start consumer process
-            cmd = ["python3", "-u", "consumer.py", "--interface", self.network_adapter]
+            # Start consumer process (use venv python if available)
+            python_cmd = self._resolve_python_interpreter()
+            cmd = [python_cmd, "-u", "consumer.py", "--interface", self.network_adapter]
             self.log_queue.put(f"Consumer Command: {' '.join(cmd)}")
             
             self.consumer_process = subprocess.Popen(
@@ -229,8 +240,11 @@ class SDCDigitalTwinMonitor:
             if hasattr(self, 'consumer_status_label'):
                 self.consumer_status_label.config(text="ON", fg="#00ff88")
             
+            # Start monitoring consumer output immediately to capture early failures
+            self.monitor_consumer_output()
+
             # Check if process started successfully
-            time.sleep(1)
+            time.sleep(0.5)
             if self.consumer_process.poll() is not None:
                 self.log_queue.put(f"✗ Consumer process exited with code: {self.consumer_process.returncode}")
                 self.sdc_messages_queue.put(f"SDC Consumer: Process failed with code {self.consumer_process.returncode}")
@@ -238,9 +252,7 @@ class SDCDigitalTwinMonitor:
                 if hasattr(self, 'consumer_status_label'):
                     self.consumer_status_label.config(text="ERROR", fg="#e53e3e")
                 return
-            
-            # Start monitoring consumer output
-            self.monitor_consumer_output()
+
             
         except Exception as e:
             error_msg = f"✗ Failed to start consumer: {e}"
@@ -1733,8 +1745,9 @@ class SDCDigitalTwinMonitor:
                 else:
                     patient_file = os.path.join(os.getcwd(), patient_file)
             
-            # Start provider with selected patient file
-            cmd = ["python3", "-u", "provider_MDT.py", "--adapter", self.network_adapter]
+            # Start provider with selected patient file (use venv python if available)
+            python_cmd = self._resolve_python_interpreter()
+            cmd = [python_cmd, "-u", "provider_MDT.py", "--adapter", self.network_adapter]
             if patient_file and os.path.exists(patient_file):
                 cmd.extend(["--patient-file", patient_file])
                 self.log_queue.put(f"Using patient file: {patient_file}")
@@ -1761,15 +1774,28 @@ class SDCDigitalTwinMonitor:
             self.sdc_messages_queue.put("SDC Consumer: Provider UUID: 72313cab-7352-51c9-8373-8b4031a66ec7")
             self.sdc_messages_queue.put("SDC Consumer: Initiating discovery protocol...")
             
+            # Start monitoring provider output immediately to capture early failures
+            self.monitor_provider_output()
+
             # Check if process started successfully
-            time.sleep(1)
+            time.sleep(0.5)
             if self.provider_process.poll() is not None:
                 self.log_queue.put(f"✗ Provider process exited with code: {self.provider_process.returncode}")
                 self.provider_status.config(text="Failed", foreground="red")
+                # Try to drain any remaining output to show the error cause
+                try:
+                    if self.provider_process and self.provider_process.stdout:
+                        remaining = self.provider_process.stdout.read()
+                        if remaining:
+                            for line in remaining.splitlines():
+                                self.log_queue.put(f"Provider: {line}")
+                except Exception:
+                    pass
+                try:
+                    messagebox.showerror("Provider failed", "Provider process exited immediately. Check the System Log for errors.\nTip: ensure you're using the project virtual environment.")
+                except Exception:
+                    pass
                 return
-            
-            # Start monitoring provider output
-            self.monitor_provider_output()
             
             # Auto-reconnect consumer after a delay
             self.root.after(5000, self.reconnect_sdc)
@@ -1777,6 +1803,10 @@ class SDCDigitalTwinMonitor:
         except Exception as e:
             self.log_queue.put(f"✗ Failed to start provider: {e}")
             self.provider_status.config(text="Error", foreground="red")
+            try:
+                messagebox.showerror("Failed to start provider", str(e))
+            except Exception:
+                pass
             
     def monitor_provider_output(self):
         """Monitor provider output in background thread."""
