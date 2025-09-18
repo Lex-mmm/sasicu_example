@@ -1,12 +1,14 @@
-# Core scientific computing
-numpy>=1.21.0
-scipy>=1.7.0
+# Core scientific computing (pinned for Streamlit's Python 3.13 environment)
+numpy>=2.0.0
+scipy>=1.12.0
 
-# GUI and visualization
-matplotlib>=3.5.0
-tkinter  # Usually included with Python
+# Visualization (avoid Tk backends)
+matplotlib>=3.8.0
 
-# Optional: SDC dependencies (only needed if using SDC provider)
+# Web app
+streamlit>=1.36.0
+
+# Optional: SDC dependencies (uncomment if building full SDC stack; may not be available on Streamlit Cloud)
 # sdc11073>=0.19.3
 # lxml>=4.6.0
 # netifaces>=0.11.0
