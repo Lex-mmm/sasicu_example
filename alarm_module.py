@@ -220,7 +220,9 @@ class AlarmModule:
         current_time = datetime.now()
         
         # Map vital signs to alarm parameter names
+        # Accept both SpO2 and SaO2 as inputs for oxygen saturation
         param_mapping = {
+            "SpO2": "SpO2",
             "SaO2": "SpO2",
             "HR": "HeartRate", 
             "SAP": "BloodPressureSystolic",

@@ -97,6 +97,96 @@ class DigitalTwinModel:
 
         # Simple cycle tracking
         self.last_cycle_start = 0.0  # Track when last cycle started
+        # Ventilator coupling state (for external UI integration)
+        # Defaults map to a simple pressure-controlled breath when MV_mode==1
+        self.vent_enabled = False
+        self.vent_rr = float(self.master_parameters['respiratory_control_params.RR_0']['value'])
+        self.vent_peep_cmH2O = 5.0
+        self.vent_deltaP_cmH2O = 15.0  # PIP - PEEP during inspiration
+        self.vent_ie_ratio = 1.0       # I:E = 1:1 by default
+        self.vent_ti = None            # If provided, overrides IE-based Ti
+        # Live ventilator outputs (updated each integration step)
+        self.vent_paw_cmH2O = 0.0
+        self.vent_vdot_lps = 0.0
+        self.vent_vol_ml = 0.0
+        # Per-breath peaks
+        self.vent_pip_cmH2O = self.vent_peep_cmH2O
+        self._vent_cycle_vt_peak_ml = 0.0
+        self._vent_prev_insp = False
+        # Waveform buffers (at model dt)
+        buf_len = int(20.0 / self.dt)
+        self._vent_paw_buf = deque([0.0] * buf_len, maxlen=buf_len)
+        self._vent_flow_buf = deque([0.0] * buf_len, maxlen=buf_len)
+        self._vent_vol_buf = deque([0.0] * buf_len, maxlen=buf_len)
+        self._vent_paw_total = 0
+        self._vent_flow_total = 0
+        self._vent_vol_total = 0
+
+    # ---- Ventilator external control API ----
+    def set_ventilator_settings(self, RR: Optional[float] = None, PEEP: Optional[float] = None,
+                                deltaP: Optional[float] = None, IE: Optional[float] = None,
+                                Ti: Optional[float] = None, enabled: Optional[bool] = None):
+        if RR is not None:
+            try:
+                self.vent_rr = float(RR)
+            except Exception:
+                pass
+        if PEEP is not None:
+            try:
+                self.vent_peep_cmH2O = max(0.0, float(PEEP))
+            except Exception:
+                pass
+        if deltaP is not None:
+            try:
+                self.vent_deltaP_cmH2O = max(0.0, float(deltaP))
+            except Exception:
+                pass
+        if IE is not None:
+            try:
+                self.vent_ie_ratio = max(0.1, float(IE))
+            except Exception:
+                pass
+        if Ti is not None:
+            try:
+                self.vent_ti = max(0.1, float(Ti))
+            except Exception:
+                pass
+        if enabled is not None:
+            self.vent_enabled = bool(enabled)
+            # Toggle ventilator mode in ODE cached param as well
+            self._ode_MV_mode = 1 if self.vent_enabled else 0
+            # Mirror in master_parameters to keep consistency
+            self.master_parameters['misc_constants.MV']['value'] = self._ode_MV_mode
+
+    def vent_get_waveform_chunk(self, signal: str, fs_target: float = 50.0, seconds: float = 3.0):
+        sig = signal.upper()
+        data_src = self._vent_paw_buf if sig == 'PAW' else (self._vent_flow_buf if sig == 'FLOW' else self._vent_vol_buf)
+        arr = np.array(list(data_src), dtype=float)
+        if arr.size == 0:
+            return {"signal": sig, "fs": fs_target, "data": []}
+        # Take only last N seconds
+        n_needed = int(seconds / self.dt)
+        if n_needed > 0 and arr.size > n_needed:
+            arr = arr[-n_needed:]
+        fs_model = 1.0 / self.dt
+        stride = max(1, int(round(fs_model / fs_target)))
+        dec = arr[::stride]
+        return {"signal": sig, "fs": fs_model/stride, "data": dec.astype(float).tolist()}
+
+    def vent_get_metrics(self):
+        RR = float(self.vent_rr)
+        T = 60.0 / max(1e-3, RR)
+        if self.vent_ti is not None:
+            Ti = float(self.vent_ti)
+        else:
+            IE = self.vent_ie_ratio if self.vent_ie_ratio is not None else 1.0
+            Ti = T * (1.0 / (1.0 + max(0.1, IE)))
+        IE_ratio = (T - Ti) / max(1e-3, Ti)
+        VT_ml = float(self._vent_cycle_vt_peak_ml)
+        PIP = float(self.vent_pip_cmH2O)
+        PEEP = float(self.vent_peep_cmH2O)
+        MV_L_min = (RR * VT_ml) / 1000.0
+        return {"RR": RR, "VT_ml": VT_ml, "MV_L_min": MV_L_min, "PIP": PIP, "PEEP": PEEP, "IE": IE_ratio}
 
     def _cache_baroreflex_parameters(self):
         """Cache parameters used frequently in baroreceptor_control for speed."""
@@ -176,17 +266,70 @@ class DigitalTwinModel:
         Load parameters from a JSON configuration file.
         Raise exceptions with detailed messages for missing or invalid files.
         """
+        import os, inspect
+
+        def _expand_names(name: str) -> list[str]:
+            names = []
+            if name:
+                names.append(name)
+                if not name.lower().endswith('.json'):
+                    names.append(f"{name}.json")
+            return names
+
+        # Build candidate paths across common locations and MDTparameters subfolders
+        here = os.path.dirname(os.path.abspath(__file__))
         try:
-            print(f"Loading parameter file: {param_file}")
-            with open(param_file, "r") as file:
-                initialHealthyParams = json.load(file)
-            self.master_parameters = initialHealthyParams
-            
-            print(f"Successfully loaded parameters for patient {self.patient_id}.")
-        except FileNotFoundError:
-            raise FileNotFoundError(f"Parameter file '{param_file}' not found. Please verify the file path.")
-        except json.JSONDecodeError as e:
-            raise ValueError(f"Parameter file '{param_file}' is not a valid JSON file: {e}")
+            import sdc_demo_suite as _suite
+            suite_dir = os.path.dirname(os.path.abspath(inspect.getfile(_suite)))
+        except Exception:
+            suite_dir = None
+
+        names = _expand_names(param_file)
+        candidates = []
+        for name in names:
+            # as-is
+            candidates.append(name)
+            # module directory
+            candidates.append(os.path.join(here, name))
+            # cwd
+            candidates.append(os.path.join(os.getcwd(), name))
+            # next to sdc_demo_suite
+            if suite_dir:
+                candidates.append(os.path.join(suite_dir, name))
+            # MDTparameters subfolder in each base
+            candidates.append(os.path.join(here, 'MDTparameters', name))
+            candidates.append(os.path.join(os.getcwd(), 'MDTparameters', name))
+            if suite_dir:
+                candidates.append(os.path.join(suite_dir, 'MDTparameters', name))
+
+        # Always add sensible defaults last: healthy.json in MDTparameters
+        candidates.append(os.path.join(here, 'MDTparameters', 'healthy.json'))
+        candidates.append(os.path.join(os.getcwd(), 'MDTparameters', 'healthy.json'))
+        if suite_dir:
+            candidates.append(os.path.join(suite_dir, 'MDTparameters', 'healthy.json'))
+
+        # Try candidates in order
+        last_err = None
+        for c in candidates:
+            try:
+                with open(c, 'r') as file:
+                    initialHealthyParams = json.load(file)
+                self.master_parameters = initialHealthyParams
+                print(f"Successfully loaded parameters from: {c}")
+                break
+            except FileNotFoundError as e:
+                last_err = e
+                continue
+            except json.JSONDecodeError as e:
+                raise ValueError(f"Parameter file '{c}' is not a valid JSON file: {e}")
+            except Exception as e:
+                last_err = e
+                continue
+        else:
+            # None matched
+            raise FileNotFoundError(
+                f"Parameter file '{param_file}' not found. Tried: {candidates}"
+            )
 
         # Process parameters that involve expressions
         self.process_parameter_expressions()
@@ -527,17 +670,26 @@ class DigitalTwinModel:
         return P, F, HR, Sa_O2, RR
 
     def ventilator_pressure(self, t):
-        """Ventilator pressure as a function of time (simple square wave for demonstration)."""
-        RR = self._ode_RR0  # Respiratory Rate (breaths per minute) - USE CACHED
-        PEEP = 5  # Positive End-Expiratory Pressure (cm H2O)
-        T = 60 / RR  # period of one respiratory cycle in seconds
-        IEratio = 1
-        TI = T * IEratio / (1 + IEratio)
-        cycle_time = t % T
-        if 0 <= cycle_time <= TI:
-            return (PEEP + 15) * 0.735  # Inhalation , 1 cmH2O = 0.735 mmHg
+        """Ventilator airway opening pressure in mmHg as a square wave.
+        Uses externally set ventilator parameters when MV_mode==1.
+        """
+        # When MV_mode==1 we use externally provided settings; otherwise return 0
+        RR = max(1e-3, float(self.vent_rr))  # breaths/min
+        T = 60.0 / RR
+        IE = float(self.vent_ie_ratio) if self.vent_ie_ratio is not None else 1.0
+        if self.vent_ti is not None:
+            TI = max(0.1, min(float(self.vent_ti), T - 0.05))
         else:
-            return PEEP * 0.735  # Exhalation
+            TI = T * (1.0 / (1.0 + max(0.1, IE)))
+        cycle_time = t % T
+        peep = float(self.vent_peep_cmH2O)
+        pip = peep + float(self.vent_deltaP_cmH2O)
+        if 0.0 <= cycle_time <= TI:
+            paw_cmH2O = pip
+        else:
+            paw_cmH2O = peep
+        # Return in mmHg (1 cmH2O = 0.735 mmHg)
+        return paw_cmH2O * 0.735
 
     def input_function(self, t, RR, Pmus_min, IEratio=1.0):
         """Input function for mechanical states."""
@@ -786,7 +938,22 @@ class DigitalTwinModel:
             + D_S_O2 * (c_Stis_O2 - c_Scap_O2)
         ) / V_Scap_O2
 
-        # ── 12) Pack dx/dt ─────────────────────────────────────────────────────────
+        # ── 12) Ventilator telemetry buffers (store at model dt) ──────────────────
+        try:
+            self.vent_paw_cmH2O = float(P_ao) / 0.735
+            self.vent_vdot_lps = float(Vdot_l)
+            # integrate tidal volume estimate (non-negative)
+            self.vent_vol_ml = max(0.0, float(self.vent_vol_ml + self.vent_vdot_lps * self.dt * 1000.0))
+            self._vent_paw_buf.append(self.vent_paw_cmH2O)
+            self._vent_flow_buf.append(self.vent_vdot_lps)
+            self._vent_vol_buf.append(self.vent_vol_ml)
+            self._vent_paw_total += 1
+            self._vent_flow_total += 1
+            self._vent_vol_total += 1
+        except Exception:
+            pass
+
+        # ── 13) Pack dx/dt ─────────────────────────────────────────────────────────
         dxdt = np.concatenate([
             dVdt,
             dxdt_mech,
@@ -912,6 +1079,10 @@ class DigitalTwinModel:
         self.running = True
         last_print_time = self.t
         last_emit_time = self.t
+        # Track ventilator cycle timing for per-breath metrics
+        _last_cycle_time = 0.0
+        _vt_peak_cycle = 0.0
+        _pip_cycle = self.vent_peep_cmH2O
 
         def _avg(buf, fallback):
             return np.mean(buf) if len(buf) > 0 else fallback
@@ -945,6 +1116,42 @@ class DigitalTwinModel:
             self.current_RR = self.RR
 
             self.current_ABP_1 = P[0]  # Link current_ABP_1 to P[3] (venous pressure compartment 3)
+
+            # Update ventilator live signals if MV_mode==1 (ventilated)
+            if self._ode_MV_mode == 1:
+                # Recompute P_ao and Vdot_l using latest state
+                P_ao = self.ventilator_pressure(sol.t[-1])  # mmHg
+                R_ml = 1.021 * 1.5
+                mech0 = float(self.current_state[10])  # corresponds to proximal airway pressure node in the mechanics
+                Vdot_l = (P_ao - mech0) / R_ml  # L/s (consistent with model units)
+                # Convert and store
+                self.vent_paw_cmH2O = float(P_ao) / 0.735
+                self.vent_vdot_lps = float(Vdot_l)
+                # Integrate volume in mL (non-negative)
+                self.vent_vol_ml = max(0.0, float(self.vent_vol_ml + self.vent_vdot_lps * self.dt * 1000.0))
+                # Track per-breath peaks
+                RRv = max(1e-3, float(self.vent_rr))
+                T = 60.0 / RRv
+                IE = self.vent_ie_ratio if self.vent_ie_ratio is not None else 1.0
+                if self.vent_ti is not None:
+                    TI = max(0.1, min(float(self.vent_ti), T - 0.05))
+                else:
+                    TI = T * (1.0 / (1.0 + max(0.1, IE)))
+                cycle_time = (self.t) % T
+                in_insp = (cycle_time <= TI)
+                # rising edges: start of inspiration
+                if in_insp and not self._vent_prev_insp:
+                    _vt_peak_cycle = self.vent_vol_ml
+                    _pip_cycle = self.vent_paw_cmH2O
+                # During inspiration, update peaks
+                if in_insp:
+                    _vt_peak_cycle = max(_vt_peak_cycle, self.vent_vol_ml)
+                    _pip_cycle = max(_pip_cycle, self.vent_paw_cmH2O)
+                # Falling edge: end inspiration -> commit PIP and VT if needed
+                if (not in_insp) and self._vent_prev_insp:
+                    self.vent_pip_cmH2O = _pip_cycle
+                    self._vent_cycle_vt_peak_ml = _vt_peak_cycle
+                self._vent_prev_insp = in_insp
 
             # Store full-resolution waveform values
             self.P_store.append(P[0])
@@ -995,7 +1202,21 @@ class DigitalTwinModel:
                 self.data_epoch = self.data_epoch[-self.data_points:]
 
                 if self.alarmModule:
-                    self.alarmModule.evaluate_data(curr_data=avg_data, historic_data=self.data_epoch)
+                    try:
+                        vitals = {
+                            'HR': float(_avg(self.avg_buffers["HR"], self.HR)),
+                            'SaO2': float(_avg(self.avg_buffers["SaO2"], 97)),
+                            'MAP': float(_avg(self.avg_buffers["MAP"], self.recent_MAP)),
+                            'RR': float(_avg(self.avg_buffers["RR"], self.RR)),
+                            'EtCO2': float(_avg(self.avg_buffers["etCO2"], self.current_state[17]))
+                        }
+                        # Optional SAP/DAP/TEMP if needed by config
+                        vitals['SAP'] = float(vitals['MAP'] + 20.0)
+                        vitals['DAP'] = float(vitals['MAP'] - 10.0)
+                        vitals['TEMP'] = 37.0
+                        self.alarmModule.evaluate_alarms(vitals)
+                    except Exception:
+                        pass
                 last_emit_time = self.t
                 #print(avg_data)
             # Periodic logging (optional)

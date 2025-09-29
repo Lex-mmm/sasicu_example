@@ -53,7 +53,7 @@
     "BloodPressureMean": {
       "enabled": true,
       "lower_limit": 65.0,
-      "upper_limit": 110.0,
+      "upper_limit": 70.0,
       "critical_low": 45.0,
       "critical_high": 140.0,
       "hysteresis": 5.0,
@@ -76,8 +76,8 @@
     },
     "RespiratoryRate": {
       "enabled": true,
-      "lower_limit": 12.0,
-      "upper_limit": 25.0,
+      "lower_limit": 0.0,
+      "upper_limit": 20.0,
       "critical_low": 6.0,
       "critical_high": 35.0,
       "hysteresis": 2.0,
