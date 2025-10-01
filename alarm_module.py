@@ -43,6 +43,9 @@ class AlarmModule:
         
         # Initialize alarm states for all parameters
         self._initialize_alarm_states()
+        # Track granular threshold changes for external (SDC) export
+        # Each entry: (parameter, threshold_type, new_value)
+        self._changed_thresholds = []
         
         logging.info(f"AlarmModule initialized for patient {patient_id}")
     
@@ -199,14 +202,29 @@ class AlarmModule:
         if parameter in self.alarm_config["alarm_parameters"]:
             if threshold_type in self.alarm_config["alarm_parameters"][parameter]:
                 old_value = self.alarm_config["alarm_parameters"][parameter][threshold_type]
+                if old_value == value:
+                    return True  # no change
                 self.alarm_config["alarm_parameters"][parameter][threshold_type] = value
+                # Mark that a re-evaluation should occur next cycle
+                st = self.alarm_states.get(parameter)
+                if st is not None:
+                    st["thresholds_changed"] = True
+                # Record change for outward export (provider will pop this list)
+                self._changed_thresholds.append((parameter, threshold_type, value))
                 self.save_alarm_config()
-                
                 logging.info(f"Updated {parameter} {threshold_type}: {old_value} → {value}")
                 return True
         return False
+
+    def pop_threshold_changes(self):
+        """Return and clear list of threshold changes since last call.
+        Returns: List[Tuple[str, str, float]]
+        """
+        changes = self._changed_thresholds[:]
+        self._changed_thresholds.clear()
+        return changes
     
-    def evaluate_alarms(self, vital_signs: Dict[str, float]) -> List[Dict[str, Any]]:
+    def evaluate_alarms(self, vital_signs: Dict[str, float], force: bool = False) -> List[Dict[str, Any]]:
         """
         Evaluate all alarm conditions for current vital signs.
         
@@ -239,8 +257,21 @@ class AlarmModule:
                 
                 if param_config["enabled"]:
                     value = vital_signs[vital_key]
-                    events = self._check_parameter_alarms(param_name, value, current_time)
-                    alarm_events.extend(events)
+                    # Only evaluate if force requested, threshold changed, or value actually changed significantly
+                    st = self.alarm_states.get(param_name, {})
+                    should_eval = force or st.get("thresholds_changed")
+                    last_val = st.get("last_value")
+                    if last_val is None or abs(value - last_val) > 1e-6:
+                        should_eval = True
+                    if should_eval:
+                        events = self._check_parameter_alarms(param_name, value, current_time)
+                        # If thresholds changed but we produced no activation events and alarm is now normal, emit synthetic CLEAR events
+                        if st.get("thresholds_changed") and not events:
+                            # If previously active and value now within normal range -> emit resolution events
+                            cleared = self._emit_clears_if_normal(param_name, value, current_time)
+                            events.extend(cleared)
+                        st["thresholds_changed"] = False
+                        alarm_events.extend(events)
         
         return alarm_events
     
@@ -309,6 +340,44 @@ class AlarmModule:
         state["last_check"] = timestamp
         
         return events
+
+    def _emit_clears_if_normal(self, parameter: str, value: float, timestamp: datetime) -> List[Dict[str, Any]]:
+        """Generate resolution events for any active alarms if parameter is now in normal range.
+        Called after threshold changes to ensure UI clears stale alarms.
+        """
+        config = self.alarm_config["alarm_parameters"][parameter]
+        state = self.alarm_states[parameter]
+        clears = []
+        # Determine if value is within all non-critical limits (with no hysteresis offset when forced)
+        lower_limit = config.get("lower_limit")
+        upper_limit = config.get("upper_limit")
+        critical_low = config.get("critical_low")
+        critical_high = config.get("critical_high")
+        normal = True
+        if critical_low is not None and value < critical_low:
+            normal = False
+        if critical_high is not None and value > critical_high:
+            normal = False
+        if lower_limit is not None and value < lower_limit:
+            normal = False
+        if upper_limit is not None and value > upper_limit:
+            normal = False
+        if not normal:
+            return clears
+        # For each active alarm flag, emit a resolve event
+        if state["alarm_critical_low"]:
+            clears.append(self._create_alarm_event(parameter, "CRITICAL_LOW", False, value, timestamp, config))
+            state["alarm_critical_low"] = False
+        if state["alarm_critical_high"]:
+            clears.append(self._create_alarm_event(parameter, "CRITICAL_HIGH", False, value, timestamp, config))
+            state["alarm_critical_high"] = False
+        if state["alarm_low"]:
+            clears.append(self._create_alarm_event(parameter, "LOW", False, value, timestamp, config))
+            state["alarm_low"] = False
+        if state["alarm_high"]:
+            clears.append(self._create_alarm_event(parameter, "HIGH", False, value, timestamp, config))
+            state["alarm_high"] = False
+        return clears
     
     def _create_alarm_event(self, parameter: str, alarm_type: str, active: bool, 
                           value: float, timestamp: datetime, config: Dict) -> Dict[str, Any]:

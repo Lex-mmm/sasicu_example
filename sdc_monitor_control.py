@@ -24,7 +24,16 @@ import subprocess
 import json
 import glob
 import queue
-import numpy as np
+try:
+    import numpy as np
+except ImportError:
+    print("\n[ERROR] numpy is not installed in the current interpreter.")
+    print("Hint: Activate the bundled virtualenv or install requirements:")
+    print("  source env/bin/activate  # (macOS/Linux) OR .\\env\\Scripts\\activate (Windows)")
+    print("  pip install -r requirements.txt")
+    print("Or run using the embedded interpreter:")
+    print("  ./env/bin/python sdc_monitor_control.py")
+    raise
 from alarm_module import AlarmModule
 from sdc_alarm_manager import SDCAlarmManager
 
@@ -81,7 +90,8 @@ class SDCDigitalTwinMonitor:
         
         # Digital Twin Control (for parameter adjustment only)
         self.dt_model = None
-        self.current_patient = "MDTparameters/healthy.json"
+        # Cross-platform default patient file path (avoids hardcoded separators/backslashes)
+        self.current_patient = os.path.join("MDTparameters", "healthy.json")
         
         # Initialize alarm system (will be properly initialized when connecting to provider)
         self.alarm_module = None
@@ -115,16 +125,44 @@ class SDCDigitalTwinMonitor:
         
         # Consumer is default OFF - user needs to start manually via button
         self.log_queue.put("📡 SDC Consumer: Default OFF - use control button to start")
+        # Placeholder attributes for applied labels (initialized later in parameter slider creation)
+        self.fio2_applied_label = None
+        self.blood_volume_applied_label = None
+        # Start live parameter reflection (FiO2 / TBV) if/when model becomes available
+        self.root.after(1500, self.start_live_param_monitoring)
 
     def _resolve_python_interpreter(self):
-        """Prefer the workspace venv's python if present; fallback to current interpreter."""
-        try:
-            venv_py = os.path.join(os.getcwd(), "env", "bin", "python3")
-            if os.path.exists(venv_py):
-                return venv_py
-        except Exception:
-            pass
-        return sys.executable or "python3"
+        """Robust cross-platform Python interpreter resolution.
+
+        Preference order:
+          1. Current process interpreter (if it has numpy installed)
+          2. Local virtual environment (env/bin/python or env/Scripts/python.exe)
+          3. shutil.which lookups: python, python3, py
+        """
+        import shutil
+
+        # 1. Current interpreter
+        cur = sys.executable
+        if cur:
+            return cur
+
+        # 2. Local venv conventional locations
+        candidates = [
+            os.path.join(os.getcwd(), 'env', 'bin', 'python'),
+            os.path.join(os.getcwd(), 'env', 'bin', 'python3'),
+            os.path.join(os.getcwd(), 'env', 'Scripts', 'python.exe'),
+            os.path.join(os.getcwd(), 'env', 'Scripts', 'python')
+        ]
+        for c in candidates:
+            if os.path.exists(c):
+                return c
+
+        # 3. PATH lookups
+        for name in ('python3', 'python', 'py'):
+            found = shutil.which(name)
+            if found:
+                return found
+        return 'python'
 
     def create_theme(self):
         """Configure a consistent, modern ttk theme and widget styles."""
@@ -503,6 +541,7 @@ class SDCDigitalTwinMonitor:
             self.vital_cards.append({
                 'card': card,
                 'value_label': value_label,
+                'unit_label': unit_label,
                 'key': key,
                 'bg_color': bg_color,
                 'text_color': text_color
@@ -702,8 +741,8 @@ class SDCDigitalTwinMonitor:
 
         hemor_btn = tk.Button(
             emerg_container,
-            text="HEMORRHAGE",
-            command=self.hemorrhage,
+            text="BLOOD SAMPLING",
+            command=self.blood_sampling_toggle,
             bg='#dd6b20', fg='#1a252f',
             font=('Helvetica', 10, 'bold'),
             activebackground='#c05621', activeforeground='#1a252f',
@@ -721,20 +760,15 @@ class SDCDigitalTwinMonitor:
             relief='flat', borderwidth=0
         )
         ecg_leadoff_btn.grid(row=1, column=0, padx=4, pady=4, sticky='ew')
-
-        reset_btn = tk.Button(
-            emerg_container,
-            text="RESET TO NORMAL",
-            command=self.reset_normal,
-            bg='#00ff88', fg='#1a252f',
-            font=('Helvetica', 10, 'bold'),
-            activebackground='#00e574', activeforeground='#1a252f',
-            relief='flat', borderwidth=0
-        )
-        reset_btn.grid(row=1, column=1, padx=4, pady=4, sticky='ew')
-
-        emerg_container.grid_columnconfigure(0, weight=1)
-        emerg_container.grid_columnconfigure(1, weight=1)
+        # Store references for toggle styling
+        self.blood_sampling_button = hemor_btn
+        self.ecg_leadoff_button = ecg_leadoff_btn
+        # Emergency status banner
+        self.emerg_status_var = tk.StringVar(value="No active emergency modes")
+        status_banner = tk.Label(emergency_section, textvariable=self.emerg_status_var,
+                                 font=('Helvetica', 9, 'bold'), anchor='w', padx=8,
+                                 bg='#24313d', fg='#718096')
+        status_banner.pack(fill=tk.X, padx=2, pady=(2,4))
 
         # SDC Consumer Control Section
         self.create_sdc_consumer_controls(parent)
@@ -810,6 +844,12 @@ class SDCDigitalTwinMonitor:
                                 activebackground='#a0aec0', activeforeground='#1a252f',
                                 relief='flat', borderwidth=0, width=4)
             apply_btn.pack(side=tk.RIGHT)
+
+            # Applied label (live value reflecting model state)
+            applied = tk.Label(right_frame, text="--", font=('Helvetica', 7),
+                               bg='#1a252f', fg='#a0aec0', width=6, anchor='e')
+            applied.pack(side=tk.RIGHT, padx=(0,4))
+            setattr(self, f"{key}_applied_label", applied)
     
     def create_ultra_compact_reflex_controls(self, parent):
         """Create modern reflex control interface."""
@@ -1091,10 +1131,12 @@ class SDCDigitalTwinMonitor:
         alarm_params = [
             ("HR", "Heart Rate", "#00ff88"),
             ("MAP", "Blood Pressure", "#4fd1c7"),
-            ("SpO2", "Oxygen Saturation", "#63b3ed"),
+            ("SAP", "Systolic BP", "#63b3ed"),
+            ("DAP", "Diastolic BP", "#90cdf4"),
             ("Temp", "Temperature", "#f687b3"),
-            ("EtCO2", "End-tidal CO2", "#fbb6ce"),
+            ("SpO2", "Oxygen Saturation", "#fbb6ce"),
             ("RR", "Respiratory Rate", "#c6f6d5"),
+            ("EtCO2", "End-tidal CO2", "#fed7d7")
         ]
 
         # Create modern grid layout for alarm status
@@ -1102,8 +1144,8 @@ class SDCDigitalTwinMonitor:
         status_grid.pack(fill=tk.X, padx=4, pady=4)
 
         for i, (param_short, param_full, accent_color) in enumerate(alarm_params):
-            row = i // 3  # 3 parameters per row for compact layout
-            col = i % 3
+            row = i // 4  # 4 parameters per row for compact layout
+            col = i % 4
 
             # Modern alarm status card
             param_card = tk.Frame(status_grid, bg='#1a252f', relief='solid', borderwidth=1)
@@ -1127,7 +1169,7 @@ class SDCDigitalTwinMonitor:
             self.alarm_status_labels[param_short] = status_indicator
 
         # Configure responsive grid
-        for col in range(3):
+        for col in range(4):
             status_grid.grid_columnconfigure(col, weight=1)
 
         # Add modern "All Clear" indicator
@@ -1248,7 +1290,6 @@ class SDCDigitalTwinMonitor:
         if not self.alarm_module:
             self.log_event_safe("Alarm module not initialized")
             return
-            
         try:
             # Update thresholds using the correct parameter names
             self.alarm_module.update_alarm_threshold("HeartRate", "lower_limit", float(self.hr_low_threshold.get()))
@@ -1257,16 +1298,13 @@ class SDCDigitalTwinMonitor:
             self.alarm_module.update_alarm_threshold("BloodPressureMean", "upper_limit", float(self.map_high_threshold.get()))
             self.alarm_module.update_alarm_threshold("SpO2", "lower_limit", float(self.spo2_low_threshold.get()))
             self.alarm_module.update_alarm_threshold("SpO2", "upper_limit", float(self.spo2_high_threshold.get()))
-            
-            # Add new alarm parameters
             self.alarm_module.update_alarm_threshold("Temperature", "lower_limit", float(self.temp_low_threshold.get()))
             self.alarm_module.update_alarm_threshold("Temperature", "upper_limit", float(self.temp_high_threshold.get()))
             self.alarm_module.update_alarm_threshold("EtCO2", "lower_limit", float(self.etco2_low_threshold.get()))
             self.alarm_module.update_alarm_threshold("EtCO2", "upper_limit", float(self.etco2_high_threshold.get()))
             self.alarm_module.update_alarm_threshold("RespiratoryRate", "lower_limit", float(self.rr_low_threshold.get()))
             self.alarm_module.update_alarm_threshold("RespiratoryRate", "upper_limit", float(self.rr_high_threshold.get()))
-            
-            # Update enabled states in configuration
+            # enabled flags
             config = self.alarm_module.get_alarm_config()
             config["alarm_parameters"]["HeartRate"]["enabled"] = self.hr_enabled.get()
             config["alarm_parameters"]["BloodPressureMean"]["enabled"] = self.map_enabled.get()
@@ -1274,12 +1312,19 @@ class SDCDigitalTwinMonitor:
             config["alarm_parameters"]["Temperature"]["enabled"] = self.temp_enabled.get()
             config["alarm_parameters"]["EtCO2"]["enabled"] = self.etco2_enabled.get()
             config["alarm_parameters"]["RespiratoryRate"]["enabled"] = self.rr_enabled.get()
-            
-            # Save configuration
             self.alarm_module.save_alarm_config()
-            
-            self.log_event_safe("Alarm settings applied successfully")
-            
+            # NEW: write IPC file for provider (alarm updates)
+            try:
+                import json, os
+                base_path = os.getcwd()
+                ipc_path = os.path.join(base_path, "alarm_updates.tmp")
+                payload = {p: {k: v for k, v in param_cfg.items() if k in ("lower_limit","upper_limit")}
+                           for p, param_cfg in config["alarm_parameters"].items()}
+                with open(ipc_path, 'w') as f:
+                    json.dump(payload, f)
+                self.log_event_safe("Alarm settings applied + IPC written for provider")
+            except Exception as e_ipc:
+                self.log_event_safe(f"Alarm settings applied but IPC write failed: {e_ipc}")
         except ValueError as e:
             self.log_event_safe(f"Invalid threshold value: {e}")
         except Exception as e:
@@ -1450,30 +1495,46 @@ class SDCDigitalTwinMonitor:
                 self.log_text.delete("1.0", f"{len(lines)-100}.0")
                 self.log_text.config(state=tk.DISABLED)
         except Exception as e:
-            print(f"Logging error: {e}")
+                                             print(f"Logging error: {e}")
             
     def update_display_safe(self, data):
         """Thread-safe display update."""
         try:
-            # Update current values
             if isinstance(data, dict):
                 self.current_values.update(data)
-                
             # Update display labels
             for param, value in self.current_values.items():
                 if hasattr(self, f'{param}_value'):
                     label = getattr(self, f'{param}_value')
+                    if param == 'hr' and getattr(self, 'ecg_lead_off_active', False):
+                        label.config(text='NOT\nMEAS', fg='#ffcc66')
+                        # Dim unit label
+                        for card_info in getattr(self, 'vital_cards', []):
+                            if card_info.get('key') == 'hr':
+                                try:
+                                    card_info['unit_label'].config(fg='#444c56')
+                                except Exception:
+                                    pass
+                                break
+                        continue
                     if param in ['hr', 'map', 'sap', 'dap', 'sao2', 'rr']:
                         label.config(text=f"{value:.0f}")
                     elif param == 'temperature':
                         label.config(text=f"{value:.1f}")
                     elif param == 'etco2':
                         label.config(text=f"{value:.0f}")
-            
-            # Evaluate alarms if alarm module is initialized
+            # If ECG lead off just cleared, restore HR label color & unit
+            if not getattr(self, 'ecg_lead_off_active', False):
+                try:
+                    for card_info in getattr(self, 'vital_cards', []):
+                        if card_info.get('key') == 'hr':
+                            card_info['value_label'].config(fg=card_info['text_color'])
+                            card_info['unit_label'].config(fg='#718096')
+                            break
+                except Exception:
+                    pass
             if self.alarm_module:
                 self.evaluate_current_alarms()
-                
         except Exception as e:
             print(f"Display update error: {e}")
     
@@ -2159,16 +2220,44 @@ class SDCDigitalTwinMonitor:
             self.log_queue.put(f"Parameter update sent to provider: {param} = {value}")
         except Exception as e:
             self.log_queue.put(f"⚠ Error sending parameter update: {e}")
-            
-        # Update the applied parameter display
-        if hasattr(self, f'{param}_applied_label'):
-            label = getattr(self, f'{param}_applied_label')
-            if param == "fio2":
-                label.config(text=f"{value:.0f}%")
-            elif param == "temperature":
-                label.config(text=f"{value:.1f}°C")
-            else:
-                label.config(text=f"{value:.1f} {unit}")
+
+        # Direct model application if model instance is present
+        if hasattr(self, 'dt_model') and self.dt_model is not None:
+            try:
+                if param == 'fio2':
+                    applied = self.dt_model.set_fio2(value)
+                    if applied:
+                        self.log_queue.put(f"Model FiO2 updated to {value:.1f}%")
+                elif param == 'blood_volume':
+                    applied = self.dt_model.set_total_blood_volume(value)
+                    if applied:
+                        self.log_queue.put(f"Model blood volume updated to {value:.0f} mL")
+            except Exception as e:
+                self.log_queue.put(f"⚠ Error applying to model: {e}")
+
+    def start_live_param_monitoring(self):
+        """Periodically refresh displayed applied FiO2 / TBV from model."""
+        if not hasattr(self, 'dt_model') or self.dt_model is None:
+            return
+        try:
+            # Update applied labels if present
+            if self.fio2_applied_label is not None:
+                try:
+                    current_f = getattr(self.dt_model, '_ode_FI_O2', None)
+                    if current_f is not None:
+                        self.fio2_applied_label.config(text=f"{current_f*100:.0f}%")
+                except Exception:
+                    pass
+            if self.blood_volume_applied_label is not None:
+                try:
+                    tbv = self.dt_model.master_parameters['misc_constants.TBV']['value']
+                    self.blood_volume_applied_label.config(text=f"{tbv:.0f} mL")
+                except Exception:
+                    pass
+        finally:
+            # Schedule next update
+            if hasattr(self, 'root'):
+                self.root.after(1000, self.start_live_param_monitoring)
             
     def toggle_baroreflex(self, enabled):
         """Toggle baroreflex on/off."""
@@ -2221,35 +2310,50 @@ class SDCDigitalTwinMonitor:
             self.consumer_status_label.config(text="OFF", fg="#e53e3e")
             self.log_queue.put("📡 Stopping SDC Consumer...")
         
-    def on_parameter_change(self, param, value):
-        """Handle parameter slider changes (legacy method for compatibility)."""
-        # This method is kept for backward compatibility
-        self.on_parameter_display_change(param, value)
-        
     def cardiac_arrest(self):
         """Simulate cardiac arrest scenario."""
         self.log_queue.put("🚨 Emergency: Cardiac Arrest")
         # TODO: Implement cardiac arrest scenario
         
     def hemorrhage(self):
-        """Simulate hemorrhage scenario."""
-        self.log_queue.put("🚨 Emergency: Hemorrhage")
-        # TODO: Implement hemorrhage scenario
-        
-    def reset_normal(self):
-        """Reset to normal parameters."""
-        self.log_queue.put("✓ Reset to normal parameters")
-        # TODO: Implement parameter reset
-        
-    def toggle_ecg_leadoff(self):
-        """Toggle ECG lead off alarm."""
+        """Deprecated: replaced by blood sampling."""
+        self.log_queue.put("⚠ Hemorrhage button deprecated; use blood sampling.")
+
+    def blood_sampling_toggle(self):
+        """Toggle blood sampling scenario (forces MAP/SAP/DAP to 300 while active)."""
         try:
-            # Write ECG lead off command to parameter file
+            self.blood_sampling_active = not getattr(self, 'blood_sampling_active', False)
             with open('param_updates.tmp', 'a') as f:
-                f.write('ecg_lead_off:1\n')
-            self.log_queue.put("🔌 ECG Lead Off alarm triggered")
+                f.write(f"blood_sampling={1 if self.blood_sampling_active else 0}\n")
+            if self.blood_sampling_active:
+                self.log_queue.put("🩸 Blood sampling STARTED (forcing arterial pressures to 300)")
+                if hasattr(self, 'blood_sampling_button'):
+                    self.blood_sampling_button.config(bg='#ffb347', fg='#1a252f')
+            else:
+                self.log_queue.put("🩸 Blood sampling ENDED (restoring normal pressures)")
+                if hasattr(self, 'blood_sampling_button'):
+                    self.blood_sampling_button.config(bg='#dd6b20', fg='#1a252f')
+            self._update_emergency_status_banner()
         except Exception as e:
-            self.log_queue.put(f"❌ Error triggering ECG lead off: {e}")
+            self.log_queue.put(f"❌ Error toggling blood sampling: {e}")
+
+    def toggle_ecg_leadoff(self):
+        """Toggle ECG lead off alarm (idempotent toggle)."""
+        try:
+            self.ecg_lead_off_active = not getattr(self, 'ecg_lead_off_active', False)
+            with open('param_updates.tmp', 'a') as f:
+                f.write(f"ecg_lead_off={1 if self.ecg_lead_off_active else 0}\n")
+            if self.ecg_lead_off_active:
+                self.log_queue.put("🔌 ECG Lead Off alarm triggered - HR not measurable")
+                if hasattr(self, 'ecg_leadoff_button'):
+                    self.ecg_leadoff_button.config(bg='#ffcc66', fg='#1a252f')
+            else:
+                self.log_queue.put("🔌 ECG Lead Off cleared")
+                if hasattr(self, 'ecg_leadoff_button'):
+                    self.ecg_leadoff_button.config(bg='#ffa500', fg='#1a252f')
+            self._update_emergency_status_banner()
+        except Exception as e:
+            self.log_queue.put(f"❌ Error toggling ECG lead off: {e}")
     
     def open_sdc_messages_window(self):
         """Open a window to display SDC messages."""

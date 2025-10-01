@@ -1,4 +1,75 @@
 # 🏥 SDC Digital Twin Medical Monitoring System
+A professional-grade medical device simulation system using the **SDC11073** protocol for real-time physiological monitoring and parameter control. Features advanced pathophysiological modeling, dynamic GUI interfaces, and comprehensive alarm management.
+High‑fidelity physiological digital twin + SDC (ISO/IEEE 11073) provider + professional monitor GUI. Real‑time vitals, configurable alarms, emergency toggles, and live parameter control for research & education.
+## 📄 License (Summary)
+**© 2025 Dr. L.M. van Loon. All Rights Reserved.** Academic & educational use only. No clinical or commercial deployment. For licensing inquiries contact the author. Full details: `docs/DETAILS.md`.
+## 📋 Contents
+1. Quick Start  
+2. Core Features  
+3. Alarm Summary  
+4. Patient Profiles (Brief)  
+5. Emergency & Parameter Controls  
+6. Troubleshooting (Core)  
+7. Extended Docs → `docs/DETAILS.md`
+## 🚀 Quick Start
+```bash
+python3 system_check.py                 # verify environment & files
+python3 provider_MDT.py --adapter en0   # start SDC provider (terminal 1)
+python3 sdc_monitor_control.py          # start monitor GUI (terminal 2)
+```
+Select patient in GUI → observe real‑time vitals & alarms.
+## 🧩 Core Features
+- Real‑time SDC metrics (HR, MAP/SAP/DAP, Temp, SpO2, RR, EtCO2)
+- Physiologic ODE digital twin (cardio‑respiratory + reflexes)
+- Configurable alarm engine (thresholds, hysteresis, synthetic clears)
+- Profile‑aware limits (adult, neonate, pediatric, disease states)
+- Emergency toggles: ECG Lead Off (HR not measurable), Blood Sampling (forces arterial pressures)
+- Live parameter control: FiO2 (percent→fraction), blood volume (smoothed), hemodynamic setpoints
+- Dark, responsive GUI with scalable vital tiles
+Extended architecture diagram & deep dive: `docs/DETAILS.md`.
+## 📦 Install (Minimal)
+```bash
+pip install -r requirements.txt   # includes sdc11073, numpy, scipy, etc.
+python3 system_check.py           # verify env & certs
+```
+Expected in `ssl/`: `cacert.pem usercert.pem userkey.pem`
+## 🚨 Alarm Summary
+Adult defaults (modifiable):
+| Param | Low | High | Crit Low | Crit High |
+|-------|-----|------|----------|-----------|
+| HR | 60 | 100 | 40 | 120 |
+| MAP | 65 | 110 | 50 | 130 |
+| SpO2 | 90 | 100 | 85 | — |
+| Temp °C | 36.0 | 38.5 | 35.0 | 40.0 |
+| RR | 12 | 25 | 8 | 30 |
+| EtCO2 | 30 | 50 | 25 | 50 |
+
+Behavior: hysteresis to reduce chatter; limit edits push to SDC LimitAlertCondition (Range Lower/Upper); clearing logic emits synthetic resolves; ECG Lead Off sets HR validity NA with technical alarm.
+## 🧪 Patient Profiles (Brief)
+JSON baselines: `healthy`, `heartfailure`, `COPD`, `pneumonia`, `neonate`. Selecting a profile adjusts model baselines + suggested limits.
+## ⚙️ Parameter & Emergency Controls
+- FiO2 (0–100%) → fraction inside model
+- Total Blood Volume (smoothed transition)
+- HR / MAP / RR setpoints (influences reflex behavior)
+- Temperature override
+- Reflex toggles: baroreflex & chemoreflex
+- Emergency: ECG Lead Off (suppress HR metric), Blood Sampling (MAP/SAP/DAP=300 while active)
+## 🆘 Troubleshooting (Core)
+| Issue | Quick Action |
+|-------|--------------|
+| No provider found | Confirm provider terminal running; adapter flag; network iface |
+| GUI disconnected | Check provider still streaming; <30s timeout |
+| Threshold change not visible | Click Apply; force change (e.g. HR 101 → 100) to export |
+| HR limit mismatch | Same as above; watch provider log for `limit.hr.upper` update |
+| FiO2 change inert | Ensure Apply; provider log shows cached FiO2 update |
+Extended guide: `docs/DETAILS.md`.
+## 🔗 Demo Suite
+End‑to‑end provider + monitor + consumer + logging:
+```bash
+./env/bin/python3 sdc_demo_suite.py
+```
+**© 2025 Dr. L.M. van Loon. Academic & educational use only.** Extended documentation in `docs/DETAILS.md`.
+# 🏥 SDC Digital Twin Medical Monitoring System
 
 A professional-grade medical device simulation system using the **SDC11073** protocol for real-time physiological monitoring and parameter control. Features advanced pathophysiological modeling, dynamic GUI interfaces, and comprehensive alarm management.
 
@@ -205,6 +276,15 @@ python3 system_check.py
 - Respiratory Rate: Apnea/Tachypnea detection
 - EtCO2: Hypo/Hypercapnia monitoring
 
+#### **Alarm Behavior Enhancements:**
+The `AlarmModule` provides threshold and critical alarms with hysteresis. Recent enhancements:
+
+- Threshold updates now flag parameters for forced re-evaluation next cycle.
+- Crossing a threshold emits an activation event; returning within limits (considering hysteresis) emits a resolution event.
+- Changing a limit that brings a value back to normal triggers synthetic clearance events so stale alarms are removed immediately.
+- `evaluate_alarms(vitals, force=True)` can be called to force evaluation (used by test harness).
+
+Minimal test harness: run `./env/bin/python test_alarm_module.py` to see activation and resolution for HeartRate and MAP.
 #### **Patient Profile Adaptation:**
 - **Adult**: HR 60-100, MAP 65-110, SpO2 >90%
 - **Neonatal**: HR 100-180, MAP 35-60, SpO2 >85%

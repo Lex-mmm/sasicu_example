@@ -166,7 +166,7 @@ if __name__ == '__main__':
     # Initialize the alarm module
     alarm_module = AlarmModule(patient_id="Dummy")
     dt_model.alarmModule = alarm_module  # Connect to digital twin
-    print("✓ Alarm module initialized and connected to digital twin")
+    print("[OK] Alarm module initialized and connected to digital twin")
     
     sampling_interval = 2 # seconds (adjust as needed)
     current_time = dt_model.t   # Initially 0
@@ -174,13 +174,13 @@ if __name__ == '__main__':
     # Adjust baseline temperature based on patient profile
     if "pneumonia" in param_file_path.lower():
         BASELINE_TEMPERATURE = 38.8  # Fever from pneumonia
-        print(f"Pneumonia patient detected - baseline temperature set to {BASELINE_TEMPERATURE}°C")
+        print(f"Pneumonia patient detected - baseline temperature set to {BASELINE_TEMPERATURE}C")
     elif "heartfailure" in param_file_path.lower() or "copd" in param_file_path.lower():
         BASELINE_TEMPERATURE = 37.0  # Normal temperature for other conditions
-        print(f"Patient profile detected - baseline temperature set to {BASELINE_TEMPERATURE}°C")
+        print(f"Patient profile detected - baseline temperature set to {BASELINE_TEMPERATURE}C")
     else:
         BASELINE_TEMPERATURE = 37.0  # Default normal temperature
-        print(f"Default baseline temperature set to {BASELINE_TEMPERATURE}°C")
+        print(f"Default baseline temperature set to {BASELINE_TEMPERATURE}C")
 
     # Parameter update file for communication with GUI
     param_update_file = os.path.join(BASE_PATH, "param_updates.tmp")
@@ -210,19 +210,31 @@ if __name__ == '__main__':
     
     def check_parameter_updates():
         """Check for parameter updates from GUI and apply them"""
+        # existing implementation unchanged
         if os.path.exists(param_update_file):
             try:
                 with open(param_update_file, 'r') as f:
                     lines = f.readlines()
-                
                 # Process each parameter update
                 for line in lines:
-                    line = line.strip()
+                    line = line.strip().replace(':', '=')  # allow old colon format
                     if '=' in line:
                         param, value = line.split('=', 1)
                         param = param.strip()
-                        value = float(value.strip())
-                        
+                        try:
+                            value = float(value.strip())
+                        except:
+                            continue
+                        # Special flags first
+                        if param == 'blood_sampling':
+                            globals()['BLOOD_SAMPLING_ACTIVE'] = bool(value)
+                            print(f"[Provider] Blood sampling flag -> {BLOOD_SAMPLING_ACTIVE}")
+                            continue
+                        if param == 'ecg_lead_off':
+                            globals()['ECG_LEAD_OFF_ACTIVE'] = bool(value)
+                            trigger_ecg_lead_off_alarm(bool(value))
+                            print(f"[Provider] ECG lead off flag -> {ECG_LEAD_OFF_ACTIVE}")
+                            continue
                         # Map GUI parameter names to digital twin parameter names
                         param_mapping = {
                             'hr_setpoint': 'cardio_control_params.HR_n',
@@ -257,14 +269,66 @@ if __name__ == '__main__':
                                 print(f"ECG lead off alarm {'triggered' if value else 'cleared'}")
                             elif dt_param in dt_model.master_parameters:
                                 # Update the parameter in the digital twin model
+                                if dt_param == 'gas_exchange_params.FI_O2':
+                                    # Interpret GUI value as percent if > 1.2
+                                    incoming = value
+                                    if incoming > 1.2:
+                                        incoming = incoming / 100.0
+                                    incoming = max(0.15, min(1.0, incoming))
+                                    old_val = dt_model.master_parameters[dt_param]['value']
+                                    dt_model.master_parameters[dt_param]['value'] = incoming
+                                    dt_model._ode_FI_O2 = incoming
+                                    print(f"[Provider] FiO2 update: slider={value:.2f} -> fraction={incoming:.3f} (old {old_val:.3f})")
+                                    continue
+                                old_val = dt_model.master_parameters[dt_param]['value']
                                 dt_model.master_parameters[dt_param]['value'] = value
-                                print(f"Updated parameter {dt_param} to {value}")
-                                
-                                # Update internal variables that cache these values
-                                if dt_param == 'cardio_control_params.HR_n':
+                                print(f"Updated parameter {dt_param}: {old_val} -> {value}")
+
+                                # Apply side-effects / cached mirrors (non-FiO2 cases)
+                                if dt_param == 'misc_constants.TBV':
+                                    # Rescale intravascular compartment volumes
+                                    try:
+                                        old_tbv = old_val
+                                        new_tbv = value
+                                        if old_tbv > 0 and hasattr(dt_model, 'current_state') and len(dt_model.current_state) >= 10:
+                                            scale = new_tbv / old_tbv
+                                            dt_model.current_state[:10] *= scale
+                                            print(f"[Provider] Rescaled TBV {old_tbv:.0f} -> {new_tbv:.0f} (scale {scale:.3f})")
+                                    except Exception as e:
+                                        print(f"[Provider] TBV rescale failed: {e}")
+                                elif dt_param == 'cardio_control_params.HR_n':
                                     dt_model._ode_HR_n = value
                                 elif dt_param == 'cardio_control_params.ABP_n':
                                     dt_model._baro_P_set = value
+                                    # Also re-cache baroreflex parameters so dependent cached values stay consistent
+                                    try:
+                                        dt_model._cache_baroreflex_parameters()
+                                        print("[Provider] Re-cached baroreflex parameters after ABP_n change")
+                                    except Exception as e:
+                                        print(f"[Provider] Baroreflex recache failed: {e}")
+                                elif dt_param == 'respiratory_control_params.RR_0':
+                                    dt_model._ode_RR0 = value
+                                elif dt_param == 'misc_constants.TBV':
+                                    # Rescale intravascular compartment volumes
+                                    try:
+                                        old_tbv = old_val
+                                        new_tbv = value
+                                        if old_tbv > 0 and hasattr(dt_model, 'current_state') and len(dt_model.current_state) >= 10:
+                                            scale = new_tbv / old_tbv
+                                            dt_model.current_state[:10] *= scale
+                                            print(f"[Provider] Rescaled TBV {old_tbv:.0f} -> {new_tbv:.0f} (scale {scale:.3f})")
+                                    except Exception as e:
+                                        print(f"[Provider] TBV rescale failed: {e}")
+                                elif dt_param == 'cardio_control_params.HR_n':
+                                    dt_model._ode_HR_n = value
+                                elif dt_param == 'cardio_control_params.ABP_n':
+                                    dt_model._baro_P_set = value
+                                    # Also re-cache baroreflex parameters so dependent cached values stay consistent
+                                    try:
+                                        dt_model._cache_baroreflex_parameters()
+                                        print("[Provider] Re-cached baroreflex parameters after ABP_n change")
+                                    except Exception as e:
+                                        print(f"[Provider] Baroreflex recache failed: {e}")
                                 elif dt_param == 'respiratory_control_params.RR_0':
                                     dt_model._ode_RR0 = value
                 
@@ -277,6 +341,26 @@ if __name__ == '__main__':
                     os.remove(param_update_file)
                 except:
                     pass
+        # NEW: alarm thresholds IPC
+        alarm_ipc = os.path.join(BASE_PATH, "alarm_updates.tmp")
+        if os.path.exists(alarm_ipc) and hasattr(dt_model, 'alarmModule') and dt_model.alarmModule is not None:
+            try:
+                import json
+                with open(alarm_ipc, 'r') as f:
+                    threshold_payload = json.load(f)
+                applied = 0
+                for param, limits in threshold_payload.items():
+                    # Only accept parameters we know
+                    for lim_key in ("lower_limit","upper_limit"):
+                        if lim_key in limits and limits[lim_key] is not None:
+                            ok = dt_model.alarmModule.update_alarm_threshold(param, lim_key, float(limits[lim_key]))
+                            if ok:
+                                applied += 1
+                os.remove(alarm_ipc)
+                if applied:
+                    print(f"[Provider] Imported {applied} alarm limit value(s) from IPC file")
+            except Exception as e:
+                print(f"[Provider] Failed importing alarm IPC: {e}")
 
     def evaluate_and_trigger_alarms(current_data):
         """Evaluate physiological data using alarm module and trigger SDC alarms"""
@@ -440,6 +524,8 @@ if __name__ == '__main__':
         return 0  # Continue integration
 
     # Main simulation loop
+    BLOOD_SAMPLING_ACTIVE = False
+    ECG_LEAD_OFF_ACTIVE = False
     while True:
         # Check for parameter updates from GUI
         check_parameter_updates()
@@ -520,16 +606,26 @@ if __name__ == '__main__':
             with my_mdib.metric_state_transaction() as transaction_mgr:
                 # Update heart rate
                 hr_state = transaction_mgr.get_state("hr")
-                hr_state.MetricValue.Value = Decimal(float(new_heart_rate))
+                if ECG_LEAD_OFF_ACTIVE:
+                    # Mark as not available / not measurable
+                    if hr_state.MetricValue is None:
+                        hr_state.mk_metric_value()
+                    hr_state.MetricValue.Validity = pm_types.MeasurementValidity.NA
+                else:
+                    hr_state.MetricValue.Value = Decimal(float(new_heart_rate))
+                    hr_state.MetricValue.Validity = pm_types.MeasurementValidity.VALID
 
-                # Update mean arterial pressure (now averaged)
+                # Overwrite pressures if blood sampling active
+                if BLOOD_SAMPLING_ACTIVE:
+                    new_blood_pressure = 300.0
+                    new_systolic_pressure = 300.0
+                    new_diastolic_pressure = 300.0
+                # Update mean arterial pressure
                 map_state = transaction_mgr.get_state("map")
                 map_state.MetricValue.Value = Decimal(float(new_blood_pressure))
-                
                 # Update systolic arterial pressure (ABPsys)
                 sap_state = transaction_mgr.get_state("sap")
                 sap_state.MetricValue.Value = Decimal(float(new_systolic_pressure))
-                
                 # Update diastolic arterial pressure (ABPdias)
                 dap_state = transaction_mgr.get_state("dap")
                 dap_state.MetricValue.Value = Decimal(float(new_diastolic_pressure))
@@ -570,6 +666,52 @@ if __name__ == '__main__':
             'etco2': new_etCO2
         }
         evaluate_and_trigger_alarms(current_data)
+        
+        # --- Export any changed alarm limits to SDC (outbound only) ---
+        try:
+            if hasattr(dt_model, 'alarmModule') and dt_model.alarmModule is not None:
+                changes = dt_model.alarmModule.pop_threshold_changes()
+                if changes:
+                    # Mapping from internal parameters to SDC base handle stems
+                    param_map = {
+                        'HeartRate': 'hr',
+                        'BloodPressureMean': 'map',
+                        'BloodPressureSystolic': 'sap',
+                        'BloodPressureDiastolic': 'dap',
+                        'Temperature': 'temperature',
+                        'SpO2': 'sao2',
+                        'RespiratoryRate': 'rr',
+                        'EtCO2': 'etco2'
+                    }
+                    # Threshold type to upper/lower mapping
+                    thr_map = {
+                        'upper_limit': 'upper',
+                        'lower_limit': 'lower',
+                        # We currently do not expose critical_* via limit descriptors; ignore or extend later
+                    }
+                    with my_mdib.alert_state_transaction() as trn:
+                        for param, thr_type, new_val in changes:
+                            if param not in param_map or thr_type not in thr_map:
+                                continue
+                            limb = thr_map[thr_type]
+                            handle = f"limit.{param_map[param]}.{limb}"
+                            try:
+                                st = trn.get_state(handle)
+                                # Ensure Limits subelement exists and set appropriate side
+                                rng = st.Limits
+                                if limb == 'upper':
+                                    rng.Upper = Decimal(float(new_val))
+                                    # If lower not set yet, leave None; consumers typically only care about single bound
+                                else:  # lower
+                                    rng.Lower = Decimal(float(new_val))
+                                # Optionally mark that this bound is monitored
+                                # For simplicity leave MonitoredAlertLimits as-is (None). Could be updated if needed.
+                                print(f"[Provider] Updated SDC limit {handle} -> {new_val}")
+                            except Exception as e_inner:
+                                print(f"[Provider] Failed updating limit state {handle}: {e_inner}")
+                    print(f"[Provider] Exported {len(changes)} alarm limit change(s) to SDC (Range Lower/Upper)")
+        except Exception as e:
+            print(f"[Provider] Alarm limit export failed: {e}")
         
         # Output current alarm status every 5 cycles (for GUI persistence)
         loop_counter += 1

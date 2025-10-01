@@ -48,15 +48,19 @@ def check_required_modules():
     return all_good
 
 def check_required_files():
-    """Check if essential files are present."""
+    """Check if essential files are present.
+
+    Backwards compatibility: Earlier versions used 'healthyFlat.json' in root.
+    Newer layout stores patient defaults under MDTparameters/healthy.json.
+    We treat either as satisfying the healthy patient baseline requirement.
+    """
     print("\n📁 Checking required files...")
     required_files = [
         ('launcher.py', 'Main launcher'),
         ('direct_monitor.py', 'Direct monitor'),
-        ('digital_twin_model.py', 'Digital twin model'),
-        ('healthyFlat.json', 'Healthy patient parameters')
+        ('digital_twin_model.py', 'Digital twin model')
     ]
-    
+
     all_good = True
     for filename, description in required_files:
         if os.path.exists(filename):
@@ -64,7 +68,22 @@ def check_required_files():
         else:
             print(f"   ❌ {filename} - {description} (MISSING)")
             all_good = False
-    
+
+    # Special handling for healthy patient file(s)
+    healthy_variants = [
+        ('healthyFlat.json', 'Legacy healthy patient parameters'),
+        (os.path.join('MDTparameters', 'healthy.json'), 'Healthy patient parameters')
+    ]
+    healthy_found = False
+    for path, label in healthy_variants:
+        if os.path.exists(path):
+            print(f"   ✅ {path} - {label}")
+            healthy_found = True
+            break
+    if not healthy_found:
+        print("   ❌ healthyFlat.json / MDTparameters/healthy.json - Healthy patient parameters (MISSING)")
+        all_good = False
+
     return all_good
 
 def check_patient_files():

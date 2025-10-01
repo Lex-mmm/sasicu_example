@@ -83,6 +83,10 @@ class DigitalTwinModel:
         self._setup_simulation_environment()
         self.current_state = self.initialize_state()
         self.current_heart_rate = 0  # Initialize monitored value
+        # TBV smoothing state
+        self._tbv_smooth_active = False
+        self._tbv_target = None
+        self._tbv_update_rate = 0.02  # fraction per simulated second
         # Global reflex gate stays enabled so per-reflex toggles work; set individual reflexes OFF by default
         self.use_reflex = True  # Set to False if you want to skip reflex calculations entirely
         self.use_baroreflex = False  # Default OFF
@@ -187,6 +191,30 @@ class DigitalTwinModel:
         PEEP = float(self.vent_peep_cmH2O)
         MV_L_min = (RR * VT_ml) / 1000.0
         return {"RR": RR, "VT_ml": VT_ml, "MV_L_min": MV_L_min, "PIP": PIP, "PEEP": PEEP, "IE": IE_ratio}
+
+    def _apply_tbv_smoothing(self, dt_model_step: float):
+        """Gradually adjust blood volumes toward target TBV if smoothing active."""
+        if not self._tbv_smooth_active or self._tbv_target is None:
+            return
+        current_tbv = self.master_parameters['misc_constants.TBV']['value']
+        target = self._tbv_target
+        if abs(target - current_tbv) < 1.0:  # within 1 mL
+            self.master_parameters['misc_constants.TBV']['value'] = target
+            self._tbv_smooth_active = False
+            print(f"[DigitalTwinModel] TBV smoothing complete at {target:.0f} mL")
+            return
+        # fraction of remaining delta this step
+        frac = min(1.0, self._tbv_update_rate * dt_model_step)
+        new_tbv = current_tbv + (target - current_tbv) * frac
+        scale = new_tbv / current_tbv if current_tbv > 0 else 1.0
+        try:
+            if hasattr(self, 'current_state') and len(self.current_state) >= 10:
+                self.current_state[:10] *= scale
+        except Exception as e:
+            print(f"Warning: TBV smoothing rescale failed: {e}")
+        self.master_parameters['misc_constants.TBV']['value'] = new_tbv
+        # Optional: log sparsely
+        # print(f"[DigitalTwinModel] TBV smoothing step -> {new_tbv:.0f} mL")
 
     def _cache_baroreflex_parameters(self):
         """Cache parameters used frequently in baroreceptor_control for speed."""
@@ -751,9 +779,24 @@ class DigitalTwinModel:
         #HR = 60 / HP  # update HR for output tracking or logging if needed
 
         # Calculate desired HR from baroreflex and central control
-        HR = 60/(60/HR_n + dHRv + dHRs) if (self.use_reflex and self.use_baroreflex) else HR_n
-        #R_c = R_n + dRs if self.use_reflex == True else 1 
-        R_c=1
+        if (self.use_reflex and self.use_baroreflex):
+            # Clamp instantaneous reflex state to avoid denominator collapse
+            dHRv_eff = float(np.clip(dHRv, -0.8, 0.8))
+            dHRs_eff = float(np.clip(dHRs, -0.8, 0.8))
+            denom = 60/HR_n + dHRv_eff + dHRs_eff
+            denom = float(np.clip(denom, 0.3, 2.0))  # Physiological heart period bounds (0.3s – 2.0s)
+            HR_raw = 60.0 / denom
+            if not hasattr(self, '_prev_HR_lp'):
+                self._prev_HR_lp = HR_raw
+            HR = 0.6 * self._prev_HR_lp + 0.4 * HR_raw  # exponential smoothing
+            self._prev_HR_lp = HR
+        else:
+            HR = HR_n
+        if (self.use_reflex and self.use_baroreflex):
+            dRs_eff = float(np.clip(dRs, -0.5, 0.5))
+            R_c = float(np.clip(1.0 + dRs_eff, 0.5, 1.5))
+        else:
+            R_c = 1.0
         UV_c = UV_n
         # Apply chemoreceptor control to respiratory parameters
         RR = RR0 + dRR_chemo if (self.use_reflex and self.use_chemoreceptor) else RR0
@@ -1016,12 +1059,13 @@ class DigitalTwinModel:
         if len(self.Fev_delayed) > int(0.2/self.dt):
             self.Fev_delayed.pop(0)
 
-        Gh = -0.13
-        Ths = 2.0
-        Gv = 0.09
-        Thv = 1.5
-        Grs = 0.45             # Baroreceptor gain resistance
-        Trs = 6                     # Time constant for the resistance response to baroreceptor stimulation
+        # Tunable (softened) gains & time constants to reduce oscillations
+        Gh = -0.08   # vagal gain (reduced magnitude)
+        Ths = 3.0    # slower parasympathetic dynamics
+        Gv = 0.05    # sympathetic gain (reduced)
+        Thv = 2.5    # slower sympathetic dynamics
+        Grs = 0.25   # resistance gain (reduced)
+        Trs = 8.0    # slower peripheral resistance dynamics
 
         sFh = Gh * (np.log(self.Fes_delayed[0] - 2.65 + 1) - 1.1)
         sFv = Gv * (self.Fev_delayed[0] - 4.66)
@@ -1030,7 +1074,10 @@ class DigitalTwinModel:
         ddHRv = (sFv - dHRv) / Thv
         ddHRh = (sFh - dHRh) / Ths
         ddRs =  (sFr - dRs)/Trs
-
+        # Clamp derivatives to avoid explosive transients
+        ddHRv = float(np.clip(ddHRv, -0.5, 0.5))
+        ddHRh = float(np.clip(ddHRh, -0.5, 0.5))
+        ddRs  = float(np.clip(ddRs,  -0.2, 0.2))
         return dPbarodt, ddHRv, ddHRh, ddRs
 
     def chemoreceptor_control(self, p_a_CO2, p_a_O2, dRR_chemo, dPmus_chemo):
@@ -1091,6 +1138,9 @@ class DigitalTwinModel:
             # Integrate ODEs
             t_span = [self.t, self.t + self.dt]
             t_eval = [self.t + self.dt]
+
+            # Apply gradual TBV adjustment if active before integration (so state used in ODE reflects updated volumes)
+            self._apply_tbv_smoothing(self.dt)
 
             # Process events
             for processedEvent in list(self.events):
@@ -1442,3 +1492,56 @@ class DigitalTwinModel:
                 #break
         else: 
             return(f"Error: Parameter {param} not found in the parameter dictionaries for patient {patient_id}")
+
+    # --- Live update helper APIs (invoked by GUI/provider) ---
+    def set_fio2(self, fio2_percent: float):
+        """Set inspired O2 fraction from percentage (e.g. 40 -> 0.40) and update cached ODE value."""
+        try:
+            fio2_percent = float(fio2_percent)
+        except Exception:
+            print(f"Invalid FiO2 value: {fio2_percent}")
+            return False
+        # Clamp sensible clinical bounds (15% to 100%)
+        fio2_percent = max(15.0, min(100.0, fio2_percent))
+        fio2_fraction = fio2_percent / 100.0
+        mp = self.master_parameters['gas_exchange_params.FI_O2']
+        mp['value'] = fio2_fraction
+        self._ode_FI_O2 = fio2_fraction
+        print(f"[DigitalTwinModel] FiO2 set to {fio2_percent:.1f}% ({fio2_fraction:.3f})")
+        return True
+
+    def set_total_blood_volume(self, tbv_ml: float):
+        """Rescale total blood volume across intravascular compartments while preserving distribution.
+
+        Assumes first 10 state entries are blood volume compartments initialized proportional to self.uvolume.
+        """
+        try:
+            tbv_ml = float(tbv_ml)
+        except Exception:
+            print(f"Invalid TBV value: {tbv_ml}")
+            return False
+        # Reasonable physiological clamp (adolescent/adult range) in mL
+        tbv_ml = max(2000.0, min(9000.0, tbv_ml))
+        # Previous value
+        old_tbv = self.master_parameters['misc_constants.TBV']['value']
+        if old_tbv <= 0:
+            print("Previous TBV invalid; skipping rescale.")
+            return False
+        # If large change, apply smoothing over multiple steps instead of instant scaling
+        change_pct = abs(tbv_ml - old_tbv) / old_tbv * 100.0
+        if change_pct > 5.0:
+            # Defer application: set target and per-step fraction (e.g., 2% of delta per model second)
+            self._tbv_target = tbv_ml
+            self._tbv_smooth_active = True
+            self._tbv_update_rate = 0.02  # fraction of remaining delta per model second
+            print(f"[DigitalTwinModel] Initiating smooth TBV change {old_tbv:.0f} -> {tbv_ml:.0f} mL (Δ {change_pct:.1f}%)")
+        else:
+            scale = tbv_ml / old_tbv
+            self.master_parameters['misc_constants.TBV']['value'] = tbv_ml
+            try:
+                if hasattr(self, 'current_state') and len(self.current_state) >= 10:
+                    self.current_state[:10] *= scale
+            except Exception as e:
+                print(f"Warning: could not rescale state blood volumes: {e}")
+            print(f"[DigitalTwinModel] Total blood volume changed {old_tbv:.0f} -> {tbv_ml:.0f} mL (scale {scale:.3f})")
+        return True
